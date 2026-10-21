@@ -1,4 +1,6 @@
 import type { TabsState } from '../../shared/types'
+import { keys } from './keys'
+import { isPathMenuClick } from './titlebar'
 
 /* The tab strip, living inside the titlebar drag region. Hidden with a
  * single tab — a one-document window looks exactly like it always did.
@@ -108,7 +110,7 @@ export class TabBar {
     add.className = 'tab-add'
     add.type = 'button'
     add.textContent = '+'
-    add.title = 'New tab (⌘T)'
+    add.title = `New tab (${keys('mod', 'T')})`
     add.setAttribute('aria-label', 'New tab')
     add.addEventListener('click', () => this.hooks.onNewTab())
 
@@ -117,8 +119,9 @@ export class TabBar {
 
   private onPointerDown(e: PointerEvent, docId: number, el: HTMLElement): void {
     if (e.button !== 0) return
-    // ⌘-click asks where the file lives; it neither activates nor drags.
-    if (e.metaKey) {
+    // ⌘-click (Ctrl-click off macOS) asks where the file lives; it
+    // neither activates nor drags.
+    if (isPathMenuClick(e)) {
       e.preventDefault()
       this.hooks.onPathMenu(docId)
       return

@@ -111,7 +111,14 @@ export function installMenu(actions: MenuActions): void {
       ? ([
           { label: 'Close Window', accelerator: 'Shift+CmdOrCtrl+W', role: 'close' }
         ] as MenuItemConstructorOptions[])
-      : ([{ role: 'quit' }] as MenuItemConstructorOptions[]))
+      : ([
+          // No app menu off macOS, so Settings lives where Windows apps
+          // keep it: at the foot of File, above Exit.
+          { type: 'separator' },
+          { label: 'Settings…', accelerator: 'CmdOrCtrl+,', click: () => sendCommand('open-settings') },
+          { type: 'separator' },
+          { role: 'quit' }
+        ] as MenuItemConstructorOptions[]))
   ]
 
   const appMenu: MenuItemConstructorOptions = {
@@ -202,7 +209,9 @@ export function installMenu(actions: MenuActions): void {
               { type: 'separator' },
               { label: 'Check for Updates…', click: () => sendCommand('check-updates') }
             ] as MenuItemConstructorOptions[])
-          : [])
+          : []),
+        // macOS keeps About in the app menu; elsewhere it closes Help.
+        ...(isMac ? [] : ([{ type: 'separator' }, { role: 'about' }] as MenuItemConstructorOptions[]))
       ]
     }
   ]

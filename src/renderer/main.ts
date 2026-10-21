@@ -69,6 +69,7 @@ import { Settings } from './ui/settings'
 import { TableControls } from './ui/table-controls'
 import { TabBar } from './ui/tabs'
 import { initTitlebar, setTitlebar, setTitlebarVisible } from './ui/titlebar'
+import { keys, localizeKeys } from './ui/keys'
 import { Versions } from './ui/versions'
 
 restoreTheme()
@@ -314,7 +315,7 @@ function toggleHelp(): void {
     if (preview.visible) preview.focus()
     else editor.view.focus()
   } else {
-    void helpPreview.show(helpMd, null, 0).catch(() => showToast('Help failed to render.'))
+    void helpPreview.show(localizeKeys(helpMd, window.foolscap.platform), null, 0).catch(() => showToast('Help failed to render.'))
   }
 }
 
@@ -369,7 +370,7 @@ const settings = new Settings({
     const on = !autosaveEnabled()
     setAutosaveEnabled(on)
     if (!on) autosaveScheduler.cancelAll()
-    showToast(on ? 'Autosave on — saved documents write themselves.' : 'Autosave off — ⌘S is back in charge.')
+    showToast(on ? 'Autosave on — saved documents write themselves.' : `Autosave off — ${keys('mod', 'S')} is back in charge.`)
   }
 })
 
@@ -422,7 +423,6 @@ window.foolscap.onCommand((command) => {
   else if (command === 'browse-versions') void versions.open()
 })
 
-const mod = window.foolscap.platform === 'darwin' ? '⌘' : 'Ctrl+'
 const revealLabel = window.foolscap.platform === 'darwin' ? 'Reveal in Finder' : 'Show in Folder'
 
 /* Commands that need a file behind the document: an untitled draft gets
@@ -442,18 +442,18 @@ async function copyRichText(): Promise<void> {
 }
 
 const paletteCommands = (): PaletteCommand[] => [
-  { id: 'new-tab', title: 'New Tab', hint: `${mod}T`, run: () => window.foolscap.exec('tab-new') },
-  { id: 'close-tab', title: 'Close Tab', hint: `${mod}W`, run: () => window.foolscap.exec('tab-close') },
-  { id: 'reopen-tab', title: 'Reopen Closed Tab', hint: `⇧${mod}T`, run: () => window.foolscap.exec('tab-reopen') },
-  { id: 'new-window', title: 'New Window', hint: `${mod}N`, run: () => window.foolscap.exec('window-new') },
-  { id: 'open', title: 'Open…', hint: `${mod}O`, run: () => window.foolscap.exec('file-open') },
+  { id: 'new-tab', title: 'New Tab', hint: keys('mod', 'T'), run: () => window.foolscap.exec('tab-new') },
+  { id: 'close-tab', title: 'Close Tab', hint: keys('mod', 'W'), run: () => window.foolscap.exec('tab-close') },
+  { id: 'reopen-tab', title: 'Reopen Closed Tab', hint: keys('shift', 'mod', 'T'), run: () => window.foolscap.exec('tab-reopen') },
+  { id: 'new-window', title: 'New Window', hint: keys('mod', 'N'), run: () => window.foolscap.exec('window-new') },
+  { id: 'open', title: 'Open…', hint: keys('mod', 'O'), run: () => window.foolscap.exec('file-open') },
   ...recents.map((file) => ({
     id: `recent:${file.path}`,
     title: `Open: ${file.name}`,
     hint: file.dir,
     run: () => window.foolscap.openRecent(file.path)
   })),
-  { id: 'save', title: 'Save', hint: `${mod}S`, run: () => window.foolscap.exec('file-save') },
+  { id: 'save', title: 'Save', hint: keys('mod', 'S'), run: () => window.foolscap.exec('file-save') },
   { id: 'save-as', title: 'Save As…', run: () => window.foolscap.exec('file-save-as') },
   { id: 'versions', title: 'Browse Versions…', run: () => void versions.open() },
   { id: 'reveal', title: revealLabel, run: () => withPath(() => window.foolscap.exec('file-reveal')) },
@@ -469,26 +469,26 @@ const paletteCommands = (): PaletteCommand[] => [
   {
     id: 'copy-rich-text',
     title: 'Copy as Rich Text',
-    hint: `⌥${mod}C`,
+    hint: keys('alt', 'mod', 'C'),
     run: () => void copyRichText()
   },
   {
     id: 'find',
     title: 'Find & Replace',
-    hint: `${mod}F`,
+    hint: keys('mod', 'F'),
     run: () => {
       if (preview.visible || previewEntering) exitPreview()
       openSearchPanel(editor.view)
     }
   },
-  { id: 'preview', title: 'Toggle Preview', hint: `${mod}E`, run: () => togglePreview() },
-  { id: 'format-bold', title: 'Format: Bold', hint: `${mod}B`, run: () => formatInEditor(toggleBold) },
-  { id: 'format-italic', title: 'Format: Italic', hint: `${mod}I`, run: () => formatInEditor(toggleItalic) },
-  { id: 'format-strike', title: 'Format: Strikethrough', hint: `⇧${mod}X`, run: () => formatInEditor(toggleStrikethrough) },
-  { id: 'format-code', title: 'Format: Inline Code', hint: `⇧${mod}C`, run: () => formatInEditor(toggleInlineCode) },
-  { id: 'format-link', title: 'Format: Link', hint: `⇧${mod}K`, run: () => formatInEditor(insertLink) },
-  { id: 'help', title: 'wtf is this? (Help)', hint: `⇧${mod}/`, run: () => window.foolscap.exec('help-window') },
-  { id: 'outline', title: 'Toggle Outline', hint: `⇧${mod}O`, run: () => outline.toggle() },
+  { id: 'preview', title: 'Toggle Preview', hint: keys('mod', 'E'), run: () => togglePreview() },
+  { id: 'format-bold', title: 'Format: Bold', hint: keys('mod', 'B'), run: () => formatInEditor(toggleBold) },
+  { id: 'format-italic', title: 'Format: Italic', hint: keys('mod', 'I'), run: () => formatInEditor(toggleItalic) },
+  { id: 'format-strike', title: 'Format: Strikethrough', hint: keys('shift', 'mod', 'X'), run: () => formatInEditor(toggleStrikethrough) },
+  { id: 'format-code', title: 'Format: Inline Code', hint: keys('shift', 'mod', 'C'), run: () => formatInEditor(toggleInlineCode) },
+  { id: 'format-link', title: 'Format: Link', hint: keys('shift', 'mod', 'K'), run: () => formatInEditor(insertLink) },
+  { id: 'help', title: 'wtf is this? (Help)', hint: keys('shift', 'mod', '/'), run: () => window.foolscap.exec('help-window') },
+  { id: 'outline', title: 'Toggle Outline', hint: keys('shift', 'mod', 'O'), run: () => outline.toggle() },
   { id: 'export-html', title: 'Export as HTML…', run: () => window.foolscap.exec('export-html') },
   { id: 'export-pdf', title: 'Export as PDF…', run: () => window.foolscap.exec('export-pdf') },
   { id: 'typewriter', title: 'Toggle Typewriter Mode', run: () => modes.toggleTypewriter() },
@@ -496,14 +496,14 @@ const paletteCommands = (): PaletteCommand[] => [
   { id: 'wordcount', title: 'Toggle Word Count', run: () => modes.toggleWordCount() },
   { id: 'line-numbers', title: 'Toggle Line Numbers', run: () => modes.toggleLineNumbers() },
   { id: 'table-grid', title: 'Toggle Table Grid', run: () => modes.toggleTableGrid() },
-  { id: 'settings', title: 'Settings…', hint: `${mod},`, run: () => settings.toggle() },
+  { id: 'settings', title: 'Settings…', hint: keys('mod', ','), run: () => settings.toggle() },
   ...(canCheckUpdates
     ? [{ id: 'check-updates', title: 'Check for Updates…', run: () => checkUpdatesNow() }]
     : []),
-  { id: 'print', title: 'Print…', hint: `${mod}P`, run: () => window.foolscap.exec('file-print') },
-  { id: 'text-larger', title: 'Text Size: Larger', hint: `${mod}+`, run: () => void adjustTextSize(1) },
-  { id: 'text-smaller', title: 'Text Size: Smaller', hint: `${mod}−`, run: () => void adjustTextSize(-1) },
-  { id: 'text-reset', title: 'Text Size: Reset', hint: `${mod}0`, run: () => void applyTextSize(null) },
+  { id: 'print', title: 'Print…', hint: keys('mod', 'P'), run: () => window.foolscap.exec('file-print') },
+  { id: 'text-larger', title: 'Text Size: Larger', hint: keys('mod', '+'), run: () => void adjustTextSize(1) },
+  { id: 'text-smaller', title: 'Text Size: Smaller', hint: keys('mod', '−'), run: () => void adjustTextSize(-1) },
+  { id: 'text-reset', title: 'Text Size: Reset', hint: keys('mod', '0'), run: () => void applyTextSize(null) },
   { id: 'theme-custom', title: 'Theme: Load Custom…', run: () => loadCustomTheme() },
   { id: 'font-default', title: 'Font: Recursive (Default)', run: () => applyFont(null) },
   ...FONTS.map((font) => ({
@@ -871,7 +871,7 @@ window.foolscap.onRequestState((docId) => {
 })
 
 window.foolscap.onAutosaveFailed(() =>
-  showToast('Autosave couldn’t write the file — your changes are safe here. Check the folder, or ⌘S.')
+  showToast(`Autosave couldn’t write the file — your changes are safe here. Check the folder, or ${keys('mod', 'S')}.`)
 )
 
 window.foolscap.onConflict((docId) => {

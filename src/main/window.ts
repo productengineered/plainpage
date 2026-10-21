@@ -51,9 +51,10 @@ export function createWindow(): BrowserWindow {
     minHeight: 320,
     show: false,
     backgroundColor: nativeTheme.shouldUseDarkColors ? PAPER_DARK : PAPER_LIGHT,
-    ...(process.platform === 'darwin'
-      ? { titleBarStyle: 'hiddenInset' as const }
-      : { frame: false }),
+    // macOS draws its traffic lights inside our strip; Windows and Linux
+    // keep the system frame — title, caption buttons, snap, the menu bar —
+    // and the strip below it carries only the tabs.
+    ...(process.platform === 'darwin' ? { titleBarStyle: 'hiddenInset' as const } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       // Dev-only: FOOLSCAP_E2E=1 makes the renderer publish its test bridge

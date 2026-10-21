@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { assetName, atomicWriteFile, tempName, timestampName } from './files'
+import { applyEol, assetName, atomicWriteFile, detectEol, renameOver, tempName, timestampName } from './files'
 
 describe('tempName', () => {
   it('never repeats for the same target', () => {
@@ -98,5 +98,64 @@ describe('atomicWriteFile', () => {
     const content = '# Tîtle — “quotes”\n\ntrailing spaces  \n\tand a tab\n\n'
     await atomicWriteFile(target, content)
     expect(await readFile(target, 'utf8')).toBe(content)
+  })
+})
+
+describe('line endings', () => {
+  it('reads \\r\\n files as \\r\\n and everything else as \\n', () => {
+    expect(detectEol('a\r\nb\r\n')).toBe('\r\n')
+    expect(detectEol('a\nb\n')).toBe('\n')
+    expect(detectEol('no newline at all')).toBe('\n')
+    expect(detectEol('')).toBe('\n')
+  })
+
+  it('lets the majority decide a mixed file, ties going to \\n', () => {
+    expect(detectEol('a\r\nb\r\nc\n')).toBe('\r\n')
+    expect(detectEol('a\r\nb\nc\n')).toBe('\n')
+    expect(detectEol('a\r\nb\n')).toBe('\n')
+  })
+
+  it('writes \\r\\n back over the editor\'s \\n, never doubling an existing \\r', () => {
+    expect(applyEol('a\nb\n', '\r\n')).toBe('a\r\nb\r\n')
+    expect(applyEol('a\r\nb\n', '\r\n')).toBe('a\r\nb\r\n')
+    expect(applyEol('a\nb\n', '\n')).toBe('a\nb\n')
+  })
+
+  it('round-trips a Windows file byte for byte through the editor\'s view of it', () => {
+    const disk = '# Title\r\n\r\nBody line\r\n'
+    const editor = disk.replace(/\r\n/g, '\n')
+    expect(applyEol(editor, detectEol(disk))).toBe(disk)
+  })
+})
+
+describe('renameOver', () => {
+  const locked = (code: string, failures: number) => {
+    let calls = 0
+    const doRename = async (): Promise<void> => {
+      calls++
+      if (calls <= failures) throw Object.assign(new Error(code), { code })
+    }
+    return { doRename, calls: () => calls }
+  }
+
+  it('retries a briefly locked target on Windows', async () => {
+    const r = locked('EPERM', 3)
+    await renameOver('a', 'b', 'win32', r.doRename)
+    expect(r.calls()).toBe(4)
+  })
+
+  it('gives up once the lock outlasts the backoff', async () => {
+    const r = locked('EBUSY', 100)
+    await expect(renameOver('a', 'b', 'win32', r.doRename)).rejects.toThrow('EBUSY')
+    expect(r.calls()).toBe(8)
+  })
+
+  it('never retries off Windows, or for a real error', async () => {
+    const mac = locked('EPERM', 1)
+    await expect(renameOver('a', 'b', 'darwin', mac.doRename)).rejects.toThrow('EPERM')
+    expect(mac.calls()).toBe(1)
+    const missing = locked('ENOENT', 1)
+    await expect(renameOver('a', 'b', 'win32', missing.doRename)).rejects.toThrow('ENOENT')
+    expect(missing.calls()).toBe(1)
   })
 })

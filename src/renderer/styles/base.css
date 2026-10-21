@@ -58,6 +58,34 @@ body {
   cursor: default;
 }
 
+/* Windows and Linux keep the system frame: it carries the title (with the
+ * dirty dot, see WindowSession.updateTitle), the caption buttons, and the
+ * drag. The strip stops being a drag region, the name stands down, and
+ * the tabs start at the left edge. A lone document needs no strip at all. */
+:root:not([data-platform='darwin']) {
+  --titlebar-height: 38px;
+  --tabbar-inset: 0.5rem;
+}
+
+:root:not([data-platform='darwin'])[data-single-tab] {
+  --titlebar-height: 0px;
+}
+
+:root:not([data-platform='darwin']) #titlebar {
+  -webkit-app-region: no-drag;
+  background: var(--paper);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink-ghost) 25%, transparent);
+}
+
+:root:not([data-platform='darwin'])[data-single-tab] #titlebar,
+:root:not([data-platform='darwin']) .titlebar-title {
+  display: none;
+}
+
+:root:not([data-platform='darwin']) .tabbar {
+  right: var(--tabbar-inset);
+}
+
 .titlebar-dirty {
   color: var(--accent);
   margin-right: 0.45em;
@@ -316,7 +344,8 @@ body {
 .palette-input {
   width: 100%;
   border: none;
-  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink-ghost) 25%, transparent);
   background: none;
   color: var(--ink);
   font: inherit;
@@ -829,7 +858,8 @@ body {
   color: var(--ink-ghost);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink-ghost) 25%, transparent);
 }
 
 .versions-main {

@@ -63,7 +63,8 @@ its corner, and long lines wrap so a whole prompt is in view.
   `⌥`-click a cell for the raw pipes — that's where hovering shows column
   controls and pipe edges drag. Settings ▸ Writing turns the grid off
   entirely.
-- **Images** — paste a screenshot, or drop a picture from Finder; it lands
+- **Images** — paste a screenshot, or drop a picture from Finder (File
+  Explorer on Windows); it lands
   in an `assets/` folder next to your document with a relative link (a
   dropped file keeps its name). Arrow into an image to see its markdown;
   arrow out to see the picture.
@@ -95,10 +96,17 @@ its corner, and long lines wrap so a whole prompt is in view.
   clipboard the way preview renders it — paste into Google Docs, Word, or
   a CMS and the tables, code, and quotes arrive formatted. Plain-text
   destinations get the markdown itself.
+<!-- mac -->
 - **Reveal in Finder** and **Copy Path** live in the File menu and `⌘K`,
   and `⌘`-click the document's name in the title strip (or its tab) for
   the path menu — the file and every folder above it, each opening in
   Finder. The window has no proxy icon to drag, so these are the way out.
+<!-- /mac -->
+<!-- pc -->
+- **Show in Folder** and **Copy Path** live in the File menu and `⌘K`,
+  and `⌘`-click a tab for the path menu — the file and every folder above
+  it, each opening in File Explorer.
+<!-- /pc -->
 
 ## Appearance
 
@@ -124,9 +132,17 @@ export.
   document quietly writes itself on the way out (that's autosave); only
   untitled work, or a document autosave can't safely write, gets
   **asked** about.
+<!-- mac -->
 - `⌘Q` quits **silently** — files are flushed, and every open window,
   including unsaved drafts, is remembered and comes back the next time
   you open Foolscap. Quitting is just stepping away from the desk.
+<!-- /mac -->
+<!-- pc -->
+- Closing the last window (or *File ▸ Exit*) quits **silently** — files
+  are flushed, and every open window, including unsaved drafts, is
+  remembered and comes back the next time you open Foolscap. Quitting is
+  just stepping away from the desk.
+<!-- /pc -->
 
 Untitled drafts are kept in Foolscap's own app data, never written into
 your folders. A `.md` on disk changes only through a save — yours or

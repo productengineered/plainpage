@@ -39,6 +39,26 @@ describe('resolveImageSrc', () => {
     expect(resolveImageSrc('/pics/100%.png', null)).toBe('file:///pics/100%25.png')
   })
 
+  it('Windows drive paths become file:/// URLs, not one-letter schemes', () => {
+    expect(resolveImageSrc('C:\\pics\\a b.png', null)).toBe('file:///C:/pics/a%20b.png')
+    expect(resolveImageSrc('d:/pics/a.png', null)).toBe('file:///d:/pics/a.png')
+  })
+
+  it('relative paths resolve against a Windows document dir', () => {
+    expect(resolveImageSrc('assets/shot 1.png', 'C:\\Users\\me\\notes')).toBe(
+      'file:///C:/Users/me/notes/assets/shot%201.png'
+    )
+    expect(resolveImageSrc('photo#1.png', 'C:\\')).toBe('file:///C:/photo%231.png')
+  })
+
+  it('network shares become host file URLs', () => {
+    expect(resolveImageSrc('a.png', '\\\\server\\share\\docs')).toBe('file://server/share/docs/a.png')
+  })
+
+  it('a backslash in a POSIX path is a filename character', () => {
+    expect(resolveImageSrc('odd\\name.png', '/docs')).toBe('file:///docs/odd%5Cname.png')
+  })
+
   it('relative path with no document dir cannot resolve', () => {
     expect(resolveImageSrc('assets/a.png', null)).toBeNull()
   })

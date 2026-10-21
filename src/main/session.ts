@@ -16,7 +16,7 @@ import { renderExportHtml } from './export/html'
 import { printDocument, renderPdf } from './export/pdf'
 import { buildRichText } from './export/rich-text'
 import { closedTabs } from './closed-tabs'
-import { assetName, atomicWriteFile, readTextFile, watchFile } from './files'
+import { applyEol, assetName, atomicWriteFile, detectEol, readTextFile, watchFile, type Eol } from './files'
 import { docKey, listSnapshots, pruneSnapshots, readSnapshot, writeSnapshot } from './history-store'
 import { positions } from './positions-store'
 import { acquireAccess, ensureFolderAccess, rememberBookmark } from './scoped'
@@ -27,7 +27,11 @@ import { mkdir } from 'node:fs/promises'
 interface SessionHooks {
   isQuitting(): boolean
   onQuitCancelled(): void
+  /* Whether closing this window should quit the app instead (see
+   * closeQuits in close-quits.ts). */
+  closeQuits(): boolean
 }
+
 
 const MD_FILTERS = [{ name: 'Markdown', extensions: ['md', 'markdown', 'mdx'] }]
 
@@ -72,6 +76,8 @@ export class TabSession {
   /* Content we last wrote or read ourselves — used to swallow the watcher
    * echo of our own atomic saves. */
   private lastSynced: string | null = null
+  /* The file's own line endings, so a save writes them back unchanged. */
+  private eol: Eol = '\n'
   private pendingDiskContent: string | null = null
   private watcher: FSWatcher | null = null
   /* mas: scoped-resource stopper for the current document; held while open. */
@@ -159,6 +165,7 @@ export class TabSession {
       }
     }
     this.lastSynced = disk
+    if (disk !== null) this.eol = detectEol(disk)
     this.rewatch()
     const content = entry.dirty && entry.content !== null ? entry.content : (disk ?? '')
     this.load(content, entry.dirty, 'open', entry.history ?? null)
@@ -189,6 +196,7 @@ export class TabSession {
     }
     this.path = path
     this.lastSynced = content
+    this.eol = detectEol(content)
     this.rewatch()
     this.load(content)
     app.addRecentDocument(path)
@@ -239,7 +247,7 @@ export class TabSession {
     }
     let content: string
     try {
-      content = await this.getRendererContent()
+      content = applyEol(await this.getRendererContent(), this.eol)
     } catch (err) {
       dialog.showErrorBox('Save failed', `${target}\n\n${String(err)}`)
       return false
@@ -299,7 +307,7 @@ export class TabSession {
     if (this.win.isDestroyed()) return false
     let content: string
     try {
-      content = await this.getRendererContent(3000)
+      content = applyEol(await this.getRendererContent(3000), this.eol)
     } catch {
       return false
     }
@@ -658,6 +666,7 @@ export class TabSession {
     if (disk === this.lastSynced) return // echo of our own save
     if (this.win.isDestroyed()) return // read completed after close
     this.lastSynced = disk
+    this.eol = detectEol(disk)
     if (this.dirty) {
       this.pendingDiskContent = disk
       this.win.webContents.send(IPC.conflict, this.docId)
@@ -721,6 +730,11 @@ export class WindowSession {
     })
     window.on('close', (e) => {
       if (this.forceClose) return
+      if (this.hooks.closeQuits()) {
+        e.preventDefault()
+        app.quit()
+        return
+      }
       if (this.tabs.some((t) => t.isDirty)) {
         e.preventDefault()
         void this.confirmCloseAll()

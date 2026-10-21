@@ -1,4 +1,5 @@
 import type { HistoryEntry } from '../../shared/types'
+import { keys } from './keys'
 
 /* Version browser (File ▸ Browse Versions…, palette): the document's
  * snapshot history as a list of times, the chosen snapshot readable beside
@@ -116,7 +117,7 @@ export class Versions {
     foot.className = 'versions-foot'
     const hint = document.createElement('span')
     hint.className = 'versions-hint'
-    hint.textContent = 'Restoring replaces the document — ⌘Z undoes it.'
+    hint.textContent = `Restoring replaces the document — ${keys('mod', 'Z')} undoes it.`
     const restore = document.createElement('button')
     restore.type = 'button'
     restore.className = 'settings-chip'
@@ -191,6 +192,6 @@ export class Versions {
     }
     this.close()
     this.hooks.restore(text)
-    this.hooks.toast(`Restored the version from ${label}. ⌘Z undoes it.`)
+    this.hooks.toast(`Restored the version from ${label}. ${keys('mod', 'Z')} undoes it.`)
   }
 }

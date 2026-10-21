@@ -5,16 +5,23 @@
 
 let title: HTMLElement | null = null
 
+/* The platform's own path-menu modifier: ⌘ on macOS, Ctrl elsewhere. */
+export const isPathMenuClick = (e: MouseEvent): boolean =>
+  window.foolscap.platform === 'darwin' ? e.metaKey : e.ctrlKey
+
 /* ⌘-click on the name asks for the path menu — the file and the folders
  * above it, each opening in Finder — the one thing a native title would
  * have offered that hiddenInset takes away. */
 export function initTitlebar(onPathMenu: () => void): void {
+  // Styles key off the platform: off macOS the system frame shows the
+  // title, so the strip shrinks to a tab bar (base.css).
+  document.documentElement.dataset['platform'] = window.foolscap.platform
   const strip = document.getElementById('titlebar')
   if (!strip) return
   title = document.createElement('span')
   title.className = 'titlebar-title'
   title.addEventListener('mousedown', (e) => {
-    if (e.button !== 0 || !e.metaKey) return
+    if (e.button !== 0 || !isPathMenuClick(e)) return
     e.preventDefault()
     onPathMenu()
   })
@@ -25,6 +32,8 @@ export function initTitlebar(onPathMenu: () => void): void {
  * title text stands down. */
 export function setTitlebarVisible(visible: boolean): void {
   if (title) title.hidden = !visible
+  // A lone document needs no strip at all under a system frame.
+  document.documentElement.toggleAttribute('data-single-tab', visible)
 }
 
 export function setTitlebar(path: string | null, dirty: boolean): void {

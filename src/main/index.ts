@@ -8,6 +8,7 @@ import { registerIpc } from './ipc'
 import { installMenu, type MenuActions } from './menu'
 import { isOpenLink, LINK_SCHEME, parseOpenLink } from './open-link'
 import { positions } from './positions-store'
+import { closeQuits } from './close-quits'
 import { WindowSession } from './session'
 import { clearSession, loadSession, saveSession, type WindowEntry } from './session-store'
 import { IPC } from '../shared/types'
@@ -49,7 +50,8 @@ if (!gotLock) {
     isQuitting: () => quitting,
     onQuitCancelled: () => {
       quitting = false
-    }
+    },
+    closeQuits: () => closeQuits(process.platform, sessions.size, quitting)
   }
 
   // EACCES and friends count as gone: throwIfNoEntry only covers ENOENT,
