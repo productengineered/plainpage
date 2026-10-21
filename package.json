@@ -62,7 +62,7 @@
     "shiki": "^4.3.1",
     "typescript": "^7.0.2",
     "unified": "^11.0.5",
-    "vite": "^8.1.5",
+    "vite": "^8.1.6",
     "vitest": "^4.1.10"
   },
   "author": "Se\u00e1nan",
