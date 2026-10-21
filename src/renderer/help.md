@@ -6,6 +6,9 @@ by Seánan McCullough, with a few additions and a Windows build. You are reading
 course — a markdown document, rendered by the same engine that renders
 everything else.
 
+*Press `Escape`, or double-click anywhere on this page, to close it and
+start writing. `⇧⌘/` brings it back.*
+
 The whole idea fits in one sentence: *a beautiful place to write a plain
 text file that never, ever mangles it.*
 

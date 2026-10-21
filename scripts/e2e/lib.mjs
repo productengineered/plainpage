@@ -15,7 +15,7 @@ let nextPort = 9400 + (process.pid % 200)
 
 /* One app instance: its own userData (session, positions, history, lock),
  * its own working folder for documents, its own debugging port. */
-export async function launch({ files = [], edition } = {}) {
+export async function launch({ files = [], edition, keepHelp = false } = {}) {
   // Inside the repo (gitignored), not the system temp folder: nothing a
   // test run writes leaves the working tree, and close() removes it.
   await mkdirp(E2E_TMP)
@@ -63,7 +63,7 @@ export async function launch({ files = [], edition } = {}) {
       return r
     }
   }
-  await app.ready()
+  await app.ready(keepHelp)
   return app
 }
 
@@ -135,14 +135,14 @@ async function connect(port) {
   }
   /* Wait for the bridge, dismiss the first-run help, bring the window up
    * (an occluded window stops painting, which stalls some measurements). */
-  const ready = async () => {
+  const ready = async (keepHelp = false) => {
     for (let i = 0; i < 80; i++) {
       if (await evaluate(`!!window.__foolscap && $.tabs() !== null`)) break
       await sleep(250)
     }
     if (!(await evaluate(`!!window.__foolscap`))) throw new Error('test bridge never appeared — was the build made with FOOLSCAP_E2E honored?')
     await sleep(600)
-    if (await evaluate(`!document.querySelectorAll('.preview')[1].hidden`)) { await key('Escape'); await sleep(300) }
+    if (!keepHelp && await evaluate(`!document.querySelectorAll('.preview')[1].hidden`)) { await key('Escape'); await sleep(300) }
     // Focus is emulated, not taken: the page behaves as focused (caret,
     // :focus, document.hasFocus) without the app activating.
     await send('Emulation.setFocusEmulationEnabled', { enabled: true })

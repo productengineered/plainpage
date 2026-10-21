@@ -46,6 +46,7 @@ import { beginCellEditAt, finishCellEdit, posOutsideGrid } from './editor/live-p
 import { imageBlockInsertion, imagesInline, insertDroppedImages } from './editor/paste-image'
 import { createEditor } from './editor/setup'
 import helpMd from './help.md?raw'
+import welcomeMd from './welcome.md?raw'
 import { AutosaveScheduler, autosaveEnabled, setAutosaveEnabled } from './ui/autosave'
 import { classifyDrop, droppedImages } from './ui/drop'
 import {
@@ -594,8 +595,11 @@ window.addEventListener(
   true
 )
 
-/* First-ever run: open with the manual. Once, ever. */
-if (!localStorage.getItem('foolscap:first-run-done')) {
+/* First-ever run: open with the manual, and give the blank page under it
+ * something to say (see onLoad) — closing help onto an empty Untitled
+ * looked like the app had vanished. Once, ever. */
+let welcomePending = !localStorage.getItem('foolscap:first-run-done')
+if (welcomePending) {
   localStorage.setItem('foolscap:first-run-done', '1')
   toggleHelp()
 }
@@ -758,7 +762,15 @@ window.foolscap.onTabs((state) => {
   if (state.active !== displayedId && docs.has(state.active)) display(state.active)
 })
 
-window.foolscap.onLoad((doc) => {
+window.foolscap.onLoad((loaded) => {
+  // The first-run window's fresh document becomes the welcome page: still
+  // untitled and clean, so it asks nothing on close and a file opened into
+  // it replaces it; typing makes it an ordinary draft.
+  let doc = loaded
+  if (welcomePending && doc.reason === 'open' && doc.path === null && doc.content === NEW_DOC_TEMPLATE) {
+    welcomePending = false
+    doc = { ...doc, content: localizeKeys(welcomeMd, window.foolscap.platform) }
+  }
   // Where the reader left this file last time; main only sends it on opens.
   const remembered = doc.position ?? null
   const anchor =
