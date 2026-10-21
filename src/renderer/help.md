@@ -1,7 +1,8 @@
 # wtf is this?
 
-**Foolscap** is a markdown editor. Free, open source, file-first, and
-unreasonably well-typeset. You are reading its help file, which is — of
+**Plainpage** is a markdown editor. Free, open source, file-first, and
+unreasonably well-typeset. It is built on [Foolscap](https://github.com/seamoss/Foolscap)
+by Seánan McCullough, with a few additions and a Windows build. You are reading its help file, which is — of
 course — a markdown document, rendered by the same engine that renders
 everything else.
 
@@ -16,12 +17,12 @@ byte-for-byte what's in the file. The pretty rendering you see while
 editing is a costume laid *over* the text — the text itself is never
 touched. This makes the classic "my editor corrupted my file" bug
 structurally impossible, and it means every other tool on earth can read
-what Foolscap writes.
+what Plainpage writes.
 
 ## The signature
 
 Most live-preview editors hide markdown syntax when you leave a line and
-pop it back when you return. Foolscap doesn't hide — it **recedes**. The
+pop it back when you return. Plainpage doesn't hide — it **recedes**. The
 `**marks**` fade to a ghost of themselves, still there, still telling you
 what the structure is, and breathe back up when your cursor arrives.
 Nothing jumps. Nothing flickers. The gutter to the left of the text quietly
@@ -84,11 +85,11 @@ its corner, and long lines wrap so a whole prompt is in view.
   a long burst, or switching away all write the file. Untitled documents
   wait for a deliberate first save. Turn it off in `⌘,` ▸ Saving if you'd
   rather drive.
-- **Versions** — *File ▸ Browse Versions…* (or `⌘K`). Foolscap snapshots
+- **Versions** — *File ▸ Browse Versions…* (or `⌘K`). Plainpage snapshots
   your document as you work — including the file exactly as you opened it —
   into its own app data, never beside your files. Restoring a version
   replaces the buffer as one edit, so `⌘Z` takes it right back.
-- **Undo remembers.** The undo stack survives quitting: reopen Foolscap
+- **Undo remembers.** The undo stack survives quitting: reopen Plainpage
   and `⌘Z` still walks yesterday's edits.
 - **So does your place.** A file opens where you left it — the same
   passage on the page, the same line in the editor — however long ago.
@@ -135,16 +136,16 @@ export.
 <!-- mac -->
 - `⌘Q` quits **silently** — files are flushed, and every open window,
   including unsaved drafts, is remembered and comes back the next time
-  you open Foolscap. Quitting is just stepping away from the desk.
+  you open Plainpage. Quitting is just stepping away from the desk.
 <!-- /mac -->
 <!-- pc -->
 - Closing the last window (or *File ▸ Exit*) quits **silently** — files
   are flushed, and every open window, including unsaved drafts, is
-  remembered and comes back the next time you open Foolscap. Quitting is
+  remembered and comes back the next time you open Plainpage. Quitting is
   just stepping away from the desk.
 <!-- /pc -->
 
-Untitled drafts are kept in Foolscap's own app data, never written into
+Untitled drafts are kept in Plainpage's own app data, never written into
 your folders. A `.md` on disk changes only through a save — yours or
 autosave's.
 
@@ -154,7 +155,7 @@ With love to the neighbors: **Typora** is genuinely lovely, right up
 until the license nag clears its throat — again — between you and your
 own file. **MacDown** put a preview pane next to a text pane in 2014 and
 has been catching its breath ever since. Both collected features faster
-than they collected polish. Foolscap takes the opposite trade: fewer
+than they collected polish. Plainpage takes the opposite trade: fewer
 features, more finish, free forever, and it will never once interrupt
 your writing to talk about itself. (This page doesn't count. You asked.)
 
@@ -167,4 +168,5 @@ This one is about writing.
 ---
 
 Set in **Recursive** and **Fraunces**, with code in **Ioskeley Mono**.
-MIT licensed — the source is yours too.
+MIT licensed — the source is yours too: [productengineered/plainpage](https://github.com/productengineered/plainpage),
+built on [seamoss/Foolscap](https://github.com/seamoss/Foolscap).

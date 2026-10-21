@@ -80,7 +80,7 @@ export function showUpdateReadyToast(version: string, onRestart: () => void): vo
   toast.setAttribute('role', 'status')
 
   const label = document.createElement('span')
-  label.textContent = `Foolscap ${version} is ready.`
+  label.textContent = `Plainpage ${version} is ready.`
 
   const restart = document.createElement('button')
   restart.className = 'primary'

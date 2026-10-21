@@ -46,9 +46,9 @@ describe('pathsFromArgv', () => {
     ).toEqual(['/abs/doc.md', '/proj/rel/doc.md'])
   })
 
-  it('leaves foolscap:// links out (Windows/Linux relay them as argv)', () => {
+  it('leaves plainpage:// links out (Windows/Linux relay them as argv)', () => {
     expect(
-      pathsFromArgv(['C:\\Foolscap.exe', 'foolscap://open?path=%2Fa%2Fb.md'], '/home/u', filter([]))
+      pathsFromArgv(['C:\\Plainpage.exe', 'plainpage://open?path=%2Fa%2Fb.md'], '/home/u', filter([]))
     ).toEqual([])
   })
 })

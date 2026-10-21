@@ -258,7 +258,7 @@ export class TabSession {
       !(await ensureFolderAccess(
         this.win,
         dirname(target),
-        'Foolscap saves safely by writing a temporary file next to your document. Allow access to this folder.'
+        'Plainpage saves safely by writing a temporary file next to your document. Allow access to this folder.'
       ))
     ) {
       return false
@@ -489,7 +489,7 @@ export class TabSession {
       !(await ensureFolderAccess(
         this.win,
         dirname(result.filePath),
-        `Foolscap writes the ${label} safely via a temporary file in this folder. Allow access.`
+        `Plainpage writes the ${label} safely via a temporary file in this folder. Allow access.`
       ))
     ) {
       return null
@@ -985,7 +985,7 @@ export class WindowSession {
       this.window.setRepresentedFilename(active?.getPath() ?? '')
       this.window.setDocumentEdited(dirty)
     } else {
-      this.window.setTitle(`${dirty ? '• ' : ''}${name} — Foolscap`)
+      this.window.setTitle(`${dirty ? '• ' : ''}${name} — Plainpage`)
     }
   }
 

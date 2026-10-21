@@ -13,7 +13,7 @@ export interface ArgvFilter {
  * relayed by second-instance. Position is meaningless: Chromium inserts its
  * own flags anywhere in a relayed argv (e.g. --enable-avfoundation between
  * the binary and the app dir), so everything after argv[0] is judged on what
- * it is: not a flag, not a foolscap:// link (handled on its own), not the app
+ * it is: not a flag, not a plainpage:// link (handled on its own), not the app
  * path, not a directory. */
 export function pathsFromArgv(argv: string[], cwd: string, filter: ArgvFilter): string[] {
   return argv

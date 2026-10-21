@@ -5,7 +5,7 @@ import { extname, isAbsolute, resolve } from 'node:path'
  * any other query parameter is ignored, and the file must already exist.
  * Once accepted, the path travels the same road as a Finder double-click. */
 
-export const LINK_SCHEME = 'foolscap'
+export const LINK_SCHEME = 'plainpage'
 
 const OPENABLE = new Set(['.md', '.markdown', '.txt'])
 
@@ -24,19 +24,19 @@ export function parseOpenLink(raw: string, isFile: (path: string) => boolean): L
   try {
     url = new URL(raw)
   } catch {
-    return { ok: false, error: 'Couldn’t read that Foolscap link.' }
+    return { ok: false, error: 'Couldn’t read that Plainpage link.' }
   }
   if (url.protocol !== `${LINK_SCHEME}:` || url.host !== 'open' || !['', '/'].includes(url.pathname)) {
-    return { ok: false, error: 'Foolscap links can only open files: foolscap://open?path=…' }
+    return { ok: false, error: 'Plainpage links can only open files: plainpage://open?path=…' }
   }
   // searchParams has already percent-decoded the value.
   const param = url.searchParams.get('path')
-  if (!param) return { ok: false, error: 'That Foolscap link has no file path.' }
-  if (!isAbsolute(param)) return { ok: false, error: `Foolscap links need an absolute path: ${param}` }
+  if (!param) return { ok: false, error: 'That Plainpage link has no file path.' }
+  if (!isAbsolute(param)) return { ok: false, error: `Plainpage links need an absolute path: ${param}` }
   // Collapse ./ and ../ so the already-open check compares like with like.
   const path = resolve(param)
   if (!OPENABLE.has(extname(path).toLowerCase())) {
-    return { ok: false, error: 'Foolscap links open .md, .markdown, and .txt files only.' }
+    return { ok: false, error: 'Plainpage links open .md, .markdown, and .txt files only.' }
   }
   if (!isFile(path)) return { ok: false, error: `No file at ${path}` }
   return { ok: true, path }

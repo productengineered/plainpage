@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { isOpenLink, parseOpenLink } from './open-link'
 
 const files = (...paths: string[]) => (p: string) => paths.includes(p)
-const link = (path: string, extra = '') => `foolscap://open?path=${encodeURIComponent(path)}${extra}`
+const link = (path: string, extra = '') => `plainpage://open?path=${encodeURIComponent(path)}${extra}`
 
 describe('parseOpenLink', () => {
   it('opens an existing markdown file', () => {
@@ -33,7 +33,7 @@ describe('parseOpenLink', () => {
   })
 
   it('tolerates a trailing slash after the host', () => {
-    expect(parseOpenLink('foolscap://open/?path=%2Fa%2Fb.md', files('/a/b.md')).ok).toBe(true)
+    expect(parseOpenLink('plainpage://open/?path=%2Fa%2Fb.md', files('/a/b.md')).ok).toBe(true)
   })
 
   it('rejects a missing file', () => {
@@ -51,14 +51,14 @@ describe('parseOpenLink', () => {
   })
 
   it('rejects a missing or empty path', () => {
-    expect(parseOpenLink('foolscap://open', files()).ok).toBe(false)
-    expect(parseOpenLink('foolscap://open?path=', files()).ok).toBe(false)
+    expect(parseOpenLink('plainpage://open', files()).ok).toBe(false)
+    expect(parseOpenLink('plainpage://open?path=', files()).ok).toBe(false)
   })
 
   it('rejects any host but open', () => {
-    expect(parseOpenLink('foolscap://edit?path=%2Fa%2Fb.md', files('/a/b.md')).ok).toBe(false)
-    expect(parseOpenLink('foolscap://open/extra?path=%2Fa%2Fb.md', files('/a/b.md')).ok).toBe(false)
-    expect(parseOpenLink('foolscap:open?path=%2Fa%2Fb.md', files('/a/b.md')).ok).toBe(false)
+    expect(parseOpenLink('plainpage://edit?path=%2Fa%2Fb.md', files('/a/b.md')).ok).toBe(false)
+    expect(parseOpenLink('plainpage://open/extra?path=%2Fa%2Fb.md', files('/a/b.md')).ok).toBe(false)
+    expect(parseOpenLink('plainpage:open?path=%2Fa%2Fb.md', files('/a/b.md')).ok).toBe(false)
   })
 
   it('rejects other schemes and garbage', () => {
@@ -69,8 +69,8 @@ describe('parseOpenLink', () => {
 
 describe('isOpenLink', () => {
   it('spots the scheme in argv, case-insensitively', () => {
-    expect(isOpenLink('foolscap://open?path=x')).toBe(true)
-    expect(isOpenLink('FOOLSCAP://open?path=x')).toBe(true)
+    expect(isOpenLink('plainpage://open?path=x')).toBe(true)
+    expect(isOpenLink('PLAINPAGE://open?path=x')).toBe(true)
     expect(isOpenLink('/Users/me/foolscap.md')).toBe(false)
   })
 })

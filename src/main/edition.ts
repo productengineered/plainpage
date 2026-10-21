@@ -16,10 +16,11 @@ export const EDITION: Edition = __FOOLSCAP_EDITION__
 
 export const EDITION_LABEL: Record<Edition, string> = {
   direct: 'Direct download',
-  store: 'App Store'
+  store: 'Manual updates'
 }
 
-/* "0.16.0" for the direct edition, "0.16.0-mas" for the Store's. */
+/* Plainpage has no App Store edition: the store build is the no-updater
+ * build, so it shows its plain version and says updates are manual. */
 export function displayVersion(): string {
-  return EDITION === 'store' ? `${app.getVersion()}-mas` : app.getVersion()
+  return app.getVersion()
 }

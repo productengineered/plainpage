@@ -1,84 +1,74 @@
-# Foolscap
+# Plainpage
 
-A markdown editor. Free, open source, file-first, and unreasonably well-typeset.
+A markdown editor for macOS and Windows. Free, open source, file-first, and
+unreasonably well-typeset.
 
-[![CI](https://github.com/seamoss/Foolscap/actions/workflows/ci.yml/badge.svg)](https://github.com/seamoss/Foolscap/actions/workflows/ci.yml)
+Plainpage is built on [**Foolscap**](https://github.com/seamoss/Foolscap) by
+Seánan McCullough — all of the craft in the editor is his. This version adds a
+few features that haven't landed upstream yet (a copy button on code blocks,
+double-click that keeps your place in code) and a Windows build. It's
+maintained by [@productengineered](https://github.com/productengineered) for
+students; it is not an official Foolscap release, so please send Plainpage
+issues here rather than to Foolscap.
 
-![Editing in Foolscap — syntax marks recede instead of hiding](docs/editing.png)
+![Editing — syntax marks recede instead of hiding](docs/editing.png)
 
-That's the editor, mid-edit, in the Plate theme. The `##` and `**` haven't
-vanished — they've **receded**: still legible, still telling you what the
-structure is, ready to breathe back up when your cursor arrives. The table
-is a real grid you edit in place; the file underneath it is tidy pipes,
-aligned in the file itself, not just on screen.
-
-Foolscap is a single beautiful writing surface for markdown files. The buffer is plain markdown text at all times — live preview is decorations over that text, never a document model — so the file on disk is always exactly what you wrote. What you see in the editor is what HTML and PDF export produce, because one pipeline drives all three:
-
-![The same document, previewed](docs/preview.png)
+The buffer is plain markdown text at all times — live preview is decorations
+over that text, never a document model — so the file on disk is always exactly
+what you wrote.
 
 ## What it does
 
-- Files open where you left them; ⇧⌘T reopens a closed tab; drop an image from Finder or paste a URL over a selection and the markdown writes itself
-- Live preview of every markdown construct: headings (Fraunces, real optical sizing), emphasis, lists with hanging indents and real bullets, links (Cmd-click to open), Shiki-highlighted code fences, inline images, blockquotes, rules, clickable task-list checkboxes, and tables that render as a real grid and edit in place (click a cell and type; ⌥-click for the pipe source with its normalizing formatter, drag-to-resize columns, and hover column controls)
+- Files open where you left them; ⇧⌘T reopens a closed tab; drop an image from Finder or File Explorer or paste a URL over a selection and the markdown writes itself
+- Live preview of every markdown construct: headings (Fraunces, real optical sizing), emphasis, lists with hanging indents and real bullets, links (⌘-click, or Ctrl-click on Windows, to open), Shiki-highlighted code fences, inline images, blockquotes, rules, clickable task-list checkboxes, and tables that render as a real grid and edit in place (click a cell and type; ⌥-click for the pipe source with its normalizing formatter, drag-to-resize columns, and hover column controls)
 - Atomic saves — temp file, fsync, rename; a crash can never truncate your manuscript
 - Autosave with a browsable version history (File ▸ Browse Versions…), restores that ⌘Z undoes, and an undo stack that survives relaunch
 - External-change watching: clean buffers reload silently, dirty buffers get a choice
-- Command palette (⌘K) with recent files a keystroke away, find & replace, outline panel, typewriter and focus modes, optional line numbers, a word count that counts the selection
+- Command palette (⌘K / Ctrl+K) with recent files a keystroke away, find & replace, outline panel, typewriter and focus modes, optional line numbers, a word count that counts the selection
 - Seven themes — from the house Ledger and Plate to GitHub, Vercel, and VS Code — plus load-your-own-CSS custom themes ([THEMING.md](THEMING.md))
 - Ten writing faces, five serif and five sans; one font per page, and code keeps [Ioskeley Mono](https://github.com/ahatem/IoskeleyMono)
-- Paste images from the clipboard, or drop them from Finder, into a sibling `assets/` folder
-- Tabs and windows — drag a tab out and it becomes a window — with full session restore: `⌘Q` quits silently and the next launch sets the desk back up, unsaved drafts included
+- Paste images from the clipboard, or drop them in, into a sibling `assets/` folder
+- Tabs and windows — drag a tab out and it becomes a window — with full session restore: quitting is silent and the next launch sets the desk back up, unsaved drafts included
 - Self-contained HTML export and typeset PDF export with the editor's real fonts — pretty-wrapped, hyphenated, headings balanced
-- Signed, notarized, and self-updating; checks for updates from the Help menu or Settings
-
-## Out of scope
-
-Deliberately, and permanently for v1 — please don't file issues asking for:
-
-- Vaults, workspaces, or folder-as-database concepts. Files are files.
-- Sync, cloud, accounts, telemetry.
-- Graph view, backlinks, wiki-links, tags.
-- A plugin API. (Themes are not plugins; themes are in.)
-- Collaborative editing.
-- Mobile.
-- AI features. There are forty of those. This one is about writing.
-- Diagram rendering (Mermaid et al.). Fences show their source, beautifully — decided and closed.
-
-## Platform
-
-Foolscap is a **macOS app**. The Windows and Linux packaging config exists
-and may even work, but nobody here runs it — it is untested and unsupported
-for now.
+- Runs on macOS and Windows
 
 ## Install
 
-Grab the DMG from [Releases](https://github.com/seamoss/Foolscap/releases) —
-`arm64` for Apple Silicon, plain for Intel. Since **0.6.1**, builds are
-signed and notarized: drag to Applications and open like anything else.
-Since **0.7.0**, updates take care of themselves: Foolscap downloads new
-versions quietly, mentions it once in a toast when one is ready, and
-installs on restart — or on whatever quit comes naturally.
+Download the latest from [Releases](https://github.com/productengineered/plainpage/releases).
 
-(Releases before 0.6.1 were unsigned — if macOS grumbles about an old
-download, just grab a current one.)
+Plainpage isn't code-signed (signing costs money every year), so your computer
+will ask once whether you trust it. That's expected — here's the one-time step.
 
-**Two editions, one version.** The DMG above is the *direct* edition: it
-updates itself. The Mac App Store edition is the same version number and
-the same code, minus every trace of self-updating — the Store delivers its
-updates, and App Review requires that apps not add checks of their own.
-The Store edition is marked `-mas` wherever Apple lets us mark it: About
-Foolscap reads "0.16.0-mas (App Store)" there and "0.16.0 (Direct download)"
-here, the package is `Foolscap-0.16.0-mas-universal.pkg`, and each Store
-submission is tagged `v0.16.0-mas.1` (the bundle's own version string must
-stay plain digits, Apple's rule, so it is the same `0.16.0` in both).
+### Windows
+
+1. Run `Plainpage-Setup-<version>-x64.exe` (or `-arm64` on an ARM PC).
+2. If you see **"Windows protected your PC"**, click **More info → Run anyway**.
+3. Follow the installer. After that, Plainpage opens like any other app.
+
+### macOS
+
+1. Open the `.dmg` (`arm64` for Apple Silicon, `x64` for Intel) and drag
+   Plainpage to Applications.
+2. The first time you open it, macOS will say it can't verify the developer.
+   Either:
+   - open **System Settings → Privacy & Security**, scroll down, and click
+     **Open Anyway** next to Plainpage; or
+   - paste this into Terminal once:
+     ```
+     xattr -dr com.apple.quarantine /Applications/Plainpage.app
+     ```
+3. After that, it opens normally.
+
+Plainpage doesn't update itself; download a new version from Releases when
+one comes out. Your documents and settings carry over.
 
 ## Opening files by link
 
-Other apps and web pages can open a document in Foolscap with a link:
+Other apps and web pages can open a document in Plainpage with a link:
 
 ```
-foolscap://open?path=<URL-encoded absolute path>
-foolscap://open?path=%2FUsers%2Fyou%2Fnotes%2Fbrief.md
+plainpage://open?path=<URL-encoded absolute path>
+plainpage://open?path=%2FUsers%2Fyou%2Fnotes%2Fbrief.md
 ```
 
 The path must be absolute and point at an existing `.md`, `.markdown`, or
@@ -87,10 +77,10 @@ that's already open gets its tab brought forward instead of a second copy.
 From a terminal:
 
 ```
-open "foolscap://open?path=$(python3 -c 'import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1],safe=""))' /absolute/path/to/some.md)"
+open "plainpage://open?path=$(python3 -c 'import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1],safe=""))' /absolute/path/to/some.md)"
 ```
 
-macOS learns the scheme the first time Foolscap launches. Browsers ask
+macOS learns the scheme the first time Plainpage launches. Browsers ask
 before handing a link to an app; Chrome can remember the answer.
 
 ## Testing
@@ -111,6 +101,28 @@ pnpm pack:app   # unsigned local app build (dist/)
 pnpm dist       # full installers
 ```
 
+## Building
+
+```
+pnpm install
+pnpm dev        # run in development
+pnpm test       # vitest
+pnpm typecheck
+```
+
+Release builds have no auto-updater (`FOOLSCAP_EDITION=store`):
+
+```
+# macOS
+FOOLSCAP_EDITION=store CSC_IDENTITY_AUTO_DISCOVERY=false pnpm exec electron-vite build
+pnpm exec electron-builder --mac dmg --arm64 --x64 --publish never
+
+# Windows (builds fine from a Mac)
+FOOLSCAP_EDITION=store pnpm exec electron-vite build
+pnpm exec electron-builder --win nsis --x64 --arm64 --publish never
+```
+
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). Foolscap © 2026 Seánan McCullough; Plainpage changes © 2026
+productengineered.

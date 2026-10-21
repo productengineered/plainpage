@@ -346,7 +346,7 @@ function checkUpdatesNow(): void {
     if (outcome === 'update-en-route') {
       showToast(`New version ${version} available! Downloading — a toast will land when it’s ready.`)
     } else if (outcome === 'up-to-date') {
-      showToast('Foolscap is up to date.')
+      showToast('Plainpage is up to date.')
     } else if (outcome === 'dev-build') {
       showToast('Running from source — updates arrive by git, not by toast.')
     } else if (outcome === 'store-edition') {
@@ -886,7 +886,7 @@ window.foolscap.onUpdateReady(({ version }) =>
   showUpdateReadyToast(version, () => window.foolscap.exec('update-restart'))
 )
 
-window.foolscap.onUpdatedTo((version) => showToast(`Foolscap updated to ${version}.`))
+window.foolscap.onUpdatedTo((version) => showToast(`Plainpage updated to ${version}.`))
 window.foolscap.onNotice((message) => showToast(message))
 
 /* Leaving the app (or the window) is a save point: whatever the debounce

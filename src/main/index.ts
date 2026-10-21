@@ -384,10 +384,10 @@ if (!gotLock) {
     // One version number across both editions; the About panel reads
     // "Version 0.16.0 (Direct download)" or "Version 0.16.0-mas (App Store)".
     app.setAboutPanelOptions({
-      applicationName: 'Foolscap',
+      applicationName: 'Plainpage',
       applicationVersion: displayVersion(),
       version: EDITION_LABEL[EDITION],
-      copyright: '© 2026 HEAVYSTACK'
+      copyright: '© 2026 productengineered — built on Foolscap by Seánan McCullough (MIT)'
     })
 
     appReady = true

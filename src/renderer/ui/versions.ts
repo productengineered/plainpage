@@ -61,7 +61,7 @@ export class Versions {
     }
     if (this.overlay) return
     if (entries.length === 0) {
-      this.hooks.toast('No versions yet — Foolscap records them as a saved document is edited.')
+      this.hooks.toast('No versions yet — Plainpage records them as a saved document is edited.')
       return
     }
     this.docId = docId

@@ -1,9 +1,9 @@
 # Packaging (Phase 5). Local unsigned build: `pnpm pack:app` (--dir) or
 # `pnpm dist`. Signing and notarization activate automatically when the CI
 # secrets are present — see .github/workflows/release.yml.
-appId: com.foolscap.app
-productName: Foolscap
-copyright: © 2026 HEAVYSTACK
+appId: io.github.productengineered.plainpage
+productName: Plainpage
+copyright: © 2026 productengineered; built on Foolscap © 2026 Seánan McCullough
 directories:
   buildResources: build
   output: dist
@@ -34,8 +34,8 @@ fileAssociations:
 # foolscap://open?path=<absolute path> — becomes CFBundleURLTypes on macOS
 # (src/main/open-link.ts handles the links).
 protocols:
-  - name: Foolscap
-    schemes: [foolscap]
+  - name: Plainpage
+    schemes: [plainpage]
 mac:
   category: public.app-category.productivity
   icon: build/icon.icns
@@ -106,7 +106,7 @@ nsis:
 linux:
   icon: build/icon.png
   category: Office
-  maintainer: sean@noisebeard.com
+  maintainer: productengineered
   target: [AppImage, deb, rpm]
 afterPack: ./scripts/ad-hoc-sign.cjs
 publish:
@@ -115,6 +115,6 @@ publish:
   # releaseType matters: the default is a draft, and drafts are invisible
   # to releases/latest — the feed would never advance.
   provider: github
-  owner: seamoss
-  repo: Foolscap
+  owner: productengineered
+  repo: plainpage
   releaseType: release

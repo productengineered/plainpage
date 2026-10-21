@@ -1,6 +1,6 @@
 {
-  "name": "foolscap",
-  "productName": "Foolscap",
+  "name": "plainpage",
+  "productName": "Plainpage",
   "version": "0.19.1",
   "description": "A markdown editor. Free, open source, file-first, focused on typography and feel.",
   "license": "MIT",
