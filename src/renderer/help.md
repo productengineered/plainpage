@@ -1,35 +1,26 @@
-# wtf is this?
+# Plainpage Guide
 
-**Plainpage** is a markdown editor. Free, open source, file-first, and
-unreasonably well-typeset. It is built on [Foolscap](https://github.com/seamoss/Foolscap)
-by Seánan McCullough, with a few additions and a Windows build. You are reading its help file, which is — of
-course — a markdown document, rendered by the same engine that renders
-everything else.
+**Plainpage** is a free markdown editor for writing plain-text documents.
+It is built on [Foolscap](https://github.com/seamoss/Foolscap) by Seánan
+McCullough, with a few additions and a Windows build. This guide is itself
+a markdown document, shown the same way your own documents are.
 
 *Press `Escape`, or double-click anywhere on this page, to close it and
 start writing. `⇧⌘/` brings it back.*
 
-The whole idea fits in one sentence: *a beautiful place to write a plain
-text file that never, ever mangles it.*
+## Your file is always plain text
 
-## The one promise
+What you see while editing is formatting drawn *over* your text — never a
+conversion. The file on disk is exactly what you typed, so any other app
+(a code editor, GitHub, an AI tool) can read what Plainpage writes, and
+nothing gets mangled along the way.
 
-Your document is **plain markdown text at all times**. There is no hidden
-document model, no conversion, no round-trip. What's in the buffer is
-byte-for-byte what's in the file. The pretty rendering you see while
-editing is a costume laid *over* the text — the text itself is never
-touched. This makes the classic "my editor corrupted my file" bug
-structurally impossible, and it means every other tool on earth can read
-what Plainpage writes.
+## Marks fade instead of vanishing
 
-## The signature
-
-Most live-preview editors hide markdown syntax when you leave a line and
-pop it back when you return. Plainpage doesn't hide — it **recedes**. The
-`**marks**` fade to a ghost of themselves, still there, still telling you
-what the structure is, and breathe back up when your cursor arrives.
-Nothing jumps. Nothing flickers. The gutter to the left of the text quietly
-shows what kind of block you're inside.
+When your cursor leaves a line, the markdown symbols on it — `#`, `**`,
+`-` — fade to a light gray instead of disappearing, so you can still see
+how the document is built. Move back onto the line and they return. The
+gutter to the left of the text shows what kind of block you're in.
 
 ## Getting around
 
@@ -152,21 +143,11 @@ Untitled drafts are kept in Plainpage's own app data, never written into
 your folders. A `.md` on disk changes only through a save — yours or
 autosave's.
 
-## Why does this exist?
+## What it doesn't do
 
-With love to the neighbors: **Typora** is genuinely lovely, right up
-until the license nag clears its throat — again — between you and your
-own file. **MacDown** put a preview pane next to a text pane in 2014 and
-has been catching its breath ever since. Both collected features faster
-than they collected polish. Plainpage takes the opposite trade: fewer
-features, more finish, free forever, and it will never once interrupt
-your writing to talk about itself. (This page doesn't count. You asked.)
-
-## What it will never do
-
-No vaults. No sync, cloud, or accounts. No telemetry. No graph view, no
-backlinks, no plugins, no AI. There are forty apps that do those things.
-This one is about writing.
+No accounts, no sync, no cloud, no tracking. Your documents stay on your
+computer as ordinary files, and Plainpage never connects to the internet
+on its own.
 
 ---
 

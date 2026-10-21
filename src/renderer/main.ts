@@ -488,7 +488,7 @@ const paletteCommands = (): PaletteCommand[] => [
   { id: 'format-strike', title: 'Format: Strikethrough', hint: keys('shift', 'mod', 'X'), run: () => formatInEditor(toggleStrikethrough) },
   { id: 'format-code', title: 'Format: Inline Code', hint: keys('shift', 'mod', 'C'), run: () => formatInEditor(toggleInlineCode) },
   { id: 'format-link', title: 'Format: Link', hint: keys('shift', 'mod', 'K'), run: () => formatInEditor(insertLink) },
-  { id: 'help', title: 'wtf is this? (Help)', hint: keys('shift', 'mod', '/'), run: () => window.foolscap.exec('help-window') },
+  { id: 'help', title: 'Plainpage Guide (Help)', hint: keys('shift', 'mod', '/'), run: () => window.foolscap.exec('help-window') },
   { id: 'outline', title: 'Toggle Outline', hint: keys('shift', 'mod', 'O'), run: () => outline.toggle() },
   { id: 'export-html', title: 'Export as HTML…', run: () => window.foolscap.exec('export-html') },
   { id: 'export-pdf', title: 'Export as PDF…', run: () => window.foolscap.exec('export-pdf') },

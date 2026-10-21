@@ -198,7 +198,7 @@ export function installMenu(actions: MenuActions): void {
       role: 'help',
       submenu: [
         {
-          label: 'wtf is this?',
+          label: 'Plainpage Guide',
           accelerator: 'CmdOrCtrl+Shift+/',
           click: () => actions.help()
         },
