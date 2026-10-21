@@ -28,7 +28,7 @@ export async function run() {
     await app.key('Enter'); await sleep(300)
     expect(await app.evaluate(`!!document.querySelector('.palette')`), 'palette closed after running').toBe(false)
     // Save writes exactly the buffer.
-    await app.cmd('s'); await sleep(1200)
+    await app.evaluate(`window.foolscap.exec('file-save')`); await sleep(1200)
     const disk = await readFile(app.paths['note.md'], 'utf8')
     const buffer = await app.evaluate(`view.state.doc.toString()`)
     expect(disk, 'file is byte-for-byte the buffer').toBe(buffer)

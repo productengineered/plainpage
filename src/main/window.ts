@@ -36,6 +36,12 @@ export function installContentsGuards(): void {
 const PAPER_LIGHT = '#EFF1EE'
 const PAPER_DARK = '#14171A'
 
+/* Dev-only: FOOLSCAP_E2E_BACKGROUND=1 (scripts/e2e sets it) keeps test
+ * windows from taking focus — they appear without activating the app and
+ * keep painting while covered, since the harness drives them over CDP, not
+ * the real keyboard and mouse. */
+const background = process.env['FOOLSCAP_E2E_BACKGROUND'] === '1' && !app.isPackaged
+
 export function createWindow(): BrowserWindow {
   const bounds = { ...restoreWindowBounds() }
   // Additional windows cascade instead of stacking exactly on the first.
@@ -61,11 +67,19 @@ export function createWindow(): BrowserWindow {
       // (window.__foolscap, see renderer main.ts) for scripts/e2e. The flag
       // rides in as a process argument because a sandboxed preload can read
       // argv but not the environment. Packaged builds never set it.
-      additionalArguments: process.env['FOOLSCAP_E2E'] === '1' && !app.isPackaged ? ['--foolscap-e2e'] : []
+      additionalArguments: process.env['FOOLSCAP_E2E'] === '1' && !app.isPackaged ? ['--foolscap-e2e'] : [],
+      ...(background ? { backgroundThrottling: false } : {})
     }
   })
 
-  win.once('ready-to-show', () => win.show())
+  if (background) {
+    // Every focus() in the app (opening a file, a second instance) would
+    // otherwise activate it over whatever the user is doing.
+    win.focus = () => undefined
+    win.once('ready-to-show', () => win.showInactive())
+  } else {
+    win.once('ready-to-show', () => win.show())
+  }
   trackWindowBounds(win)
   attachContextMenu(win)
 

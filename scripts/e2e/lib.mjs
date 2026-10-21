@@ -34,7 +34,12 @@ export async function launch({ files = [], edition } = {}) {
     ['.', ...written, `--remote-debugging-port=${port}`, '--remote-allow-origins=*'],
     {
       cwd: ROOT,
-      env: { ...process.env, FOOLSCAP_USER_DATA: userData, FOOLSCAP_E2E: '1', ...(edition ? { FOOLSCAP_EDITION: edition } : {}) },
+      // Background by default: test windows never take focus from whoever is
+      // at the keyboard. E2E_FOREGROUND=1 restores the old behavior. The one
+      // thing background loses: shortcuts that live only in the native menu
+      // (⌘S, ⌘W, ⌘P…) never fire, because macOS routes key equivalents to the
+      // active app — call window.foolscap.exec('<command>') for those.
+      env: { ...process.env, FOOLSCAP_USER_DATA: userData, FOOLSCAP_E2E: '1', FOOLSCAP_E2E_BACKGROUND: process.env.E2E_FOREGROUND === '1' ? '0' : '1', ...(edition ? { FOOLSCAP_EDITION: edition } : {}) },
       stdio: ['ignore', 'pipe', 'pipe']
     }
   )
@@ -135,7 +140,10 @@ async function connect(port) {
     if (!(await evaluate(`!!window.__foolscap`))) throw new Error('test bridge never appeared — was the build made with FOOLSCAP_E2E honored?')
     await sleep(600)
     if (await evaluate(`!document.querySelectorAll('.preview')[1].hidden`)) { await key('Escape'); await sleep(300) }
-    await send('Page.bringToFront')
+    // Focus is emulated, not taken: the page behaves as focused (caret,
+    // :focus, document.hasFocus) without the app activating.
+    await send('Emulation.setFocusEmulationEnabled', { enabled: true })
+    if (process.env.E2E_FOREGROUND === '1') await send('Page.bringToFront')
   }
   /* Poll until `expression` is truthy, or fail with the last value. */
   const until = async (expression, { timeout = 8000, every = 100, label = expression } = {}) => {

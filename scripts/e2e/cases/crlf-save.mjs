@@ -13,7 +13,9 @@ export async function run() {
     await app.cmd('e'); await sleep(400)
     await app.evaluate(`(view.dispatch({ selection: { anchor: view.state.doc.length } }), view.focus())`)
     await app.type('Typed here.')
-    await app.cmd('s'); await sleep(1200)
+    // The palette's path to Save: native menu shortcuts (⌘S) don't reach a
+    // background test window (see launch in lib.mjs).
+    await app.evaluate(`window.foolscap.exec('file-save')`); await sleep(1200)
     const disk = await readFile(app.paths['win.md'], 'utf8')
     expect(disk, 'every line ends \\r\\n, the new text included').toBe('# Windows\r\n\r\nFirst line.\r\nTyped here.')
   } finally {

@@ -17,6 +17,7 @@
     "dist": "electron-vite build && electron-builder",
     "build:store": "FOOLSCAP_EDITION=store electron-vite build",
     "dist:store": "node scripts/dist-store.cjs",
+    "release": "node scripts/dist-plainpage.cjs",
     "test:coverage": "vitest run --coverage",
     "e2e": "node scripts/e2e/run.mjs"
   },
