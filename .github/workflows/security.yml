@@ -1,0 +1,41 @@
+name: Security
+
+# Every PR: new dependencies are checked against the GitHub Advisory
+# Database, and the PR's commits are scanned for leaked secrets. CodeQL
+# runs separately (repository default setup); CodeRabbit and Aikido are
+# GitHub Apps that review PRs on their own.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # summary comment when the check fails
+    steps:
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: moderate
+          comment-summary-in-pr: on-failure
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # the scan walks the PR's commits, not just its tip
+          persist-credentials: false
+      # Free for personal accounts; an organization would need GITLEAKS_LICENSE.
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: false
