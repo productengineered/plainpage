@@ -96,7 +96,7 @@ win:
   icon: build/icon.png
   target:
     - target: nsis
-      arch: [x64]
+      arch: [x64, arm64]
   # Azure Trusted Signing (ULTRAPLAN §7): configure via env in CI —
   # AZURE_TENANT_ID / AZURE_CLIENT_ID / AZURE_CLIENT_SECRET and
   # win.azureSignOptions. Unsigned local builds work but SmartScreen-flag.
