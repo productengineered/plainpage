@@ -31,6 +31,7 @@ fileAssociations:
     description: Markdown document
     role: Editor
     rank: Alternate
+    mimeType: text/markdown
 # foolscap://open?path=<absolute path> — becomes CFBundleURLTypes on macOS
 # (src/main/open-link.ts handles the links).
 protocols:
@@ -104,10 +105,14 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
 linux:
-  icon: build/icon.png
+  # One PNG per size: GNOME's icon theme has no 1024px slot, so a single
+  # large icon leaves the launcher blank.
+  icon: build/icons
   category: Office
   maintainer: productengineered
   target: [AppImage, deb, rpm]
+  # GNOME matches the running window to the launcher by this name.
+  syncDesktopName: true
 afterPack: ./scripts/ad-hoc-sign.cjs
 publish:
   # Releases are the update-notifier's feed (src/main/update-check.ts) and

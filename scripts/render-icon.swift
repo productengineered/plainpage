@@ -2,6 +2,8 @@
 //   swift scripts/render-icon.swift build/icon.svg build/icon.png 1024
 // For build/icon.icns: render 16–1024 into a .iconset inside the repo, then
 // `iconutil -c icns <dir>.iconset -o build/icon.icns`.
+// For Linux: `sips -z N N build/icon.png --out build/icons/NxN.png` for
+// N in 16 24 32 48 64 128 256 512 (downscaling keeps the corners clear).
 import AppKit
 let args = CommandLine.arguments
 guard let img = NSImage(contentsOf: URL(fileURLWithPath: args[1])) else { fatalError("load") }
