@@ -65,13 +65,14 @@ will ask once whether you trust it. That's expected — here's the one-time step
    machine).
 2. Install it from a terminal in the folder you downloaded it to:
    ```
-   sudo apt install ./Plainpage-<version>-amd64.deb
+   sudo apt install ./Plainpage-*-amd64.deb
    ```
+   (use `arm64` in place of `amd64` on an ARM machine).
 3. Plainpage appears in your applications list. Markdown files can be opened
    with it from the file manager (right-click → Open With).
 
 On another distribution, use the `.AppImage` instead: make it executable
-(`chmod +x Plainpage-<version>-x86_64.AppImage`) and run it. It needs FUSE 2
+(`chmod +x Plainpage-*.AppImage`) and run it. It needs FUSE 2
 (`libfuse2t64` on Debian 13 and Ubuntu 24.04+, `libfuse2` on older releases).
 
 Plainpage doesn't update itself; download a new version from Releases when
