@@ -29,14 +29,10 @@ const run = (cmd, args, env = {}) => {
   for (const name of PUBLISH_TOKENS) delete clean[name]
   execFileSync(cmd, args, { cwd: root, stdio: 'inherit', env: clean })
 }
+// Throws rather than exiting so the finally below still restores out/.
 const fail = (msg) => {
-  console.error(`\nrelease: ${msg}`)
-  process.exit(1)
+  throw new Error(`release: ${msg}`)
 }
-
-run('pnpm', ['exec', 'electron-vite', 'build'], { FOOLSCAP_EDITION: 'store' })
-const main = fs.readFileSync(path.join(root, 'out/main/index.js'), 'utf8')
-if (main.includes('electron-updater')) fail('out/main/index.js still references electron-updater')
 
 const yaml = require(require.resolve('js-yaml', { paths: [path.dirname(require.resolve('electron-builder/package.json'))] }))
 const config = yaml.load(fs.readFileSync(path.join(root, 'electron-builder.yml'), 'utf8'))
@@ -102,6 +98,10 @@ const noFeed = (dir) => {
 }
 
 try {
+  run('pnpm', ['exec', 'electron-vite', 'build'], { FOOLSCAP_EDITION: 'store' })
+  const main = fs.readFileSync(path.join(root, 'out/main/index.js'), 'utf8')
+  if (main.includes('electron-updater')) fail('out/main/index.js still references electron-updater')
+
   if (which !== 'win') {
     for (const arch of ['arm64', 'x64']) {
       builder(['--mac', 'dmg', `--${arch}`])

@@ -344,7 +344,6 @@ body {
 .palette-input {
   width: 100%;
   border: none;
-  background: var(--paper);
   border-bottom: 1px solid color-mix(in srgb, var(--ink-ghost) 25%, transparent);
   background: none;
   color: var(--ink);
