@@ -99,6 +99,18 @@ const noFeed = (dir) => {
   if (hits.length) fail(`feed file in the bundle: ${hits.join(', ')}`)
 }
 
+/* Each installer this run must produce, removed up front so that finding it
+ * afterwards proves this run built it — never a leftover from an earlier
+ * one. Names follow electron-builder's per-format arch spelling. */
+const { productName: name, version: v } = pkg
+const EXPECTED = {
+  mac: [`${name}-${v}-arm64.dmg`, `${name}-${v}-x64.dmg`],
+  win: [`${name}-Setup-${v}-x64.exe`, `${name}-Setup-${v}-arm64.exe`],
+  linux: [`${name}-${v}-amd64.deb`, `${name}-${v}-x86_64.AppImage`, `${name}-${v}-arm64.deb`, `${name}-${v}-arm64.AppImage`],
+}
+const expected = which === 'all' ? Object.values(EXPECTED).flat() : EXPECTED[which]
+for (const f of expected) fs.rmSync(path.join(root, 'dist', f), { force: true })
+
 try {
   run('pnpm', ['exec', 'electron-vite', 'build'], { FOOLSCAP_EDITION: 'store' })
   const main = fs.readFileSync(path.join(root, 'out/main/index.js'), 'utf8')
@@ -115,7 +127,7 @@ try {
     for (const arch of ['x64', 'arm64']) {
       builder(['--win', 'nsis', `--${arch}`], arch === 'arm64' ? NSIS_ARM64_ENV : {})
       noFeed(path.join(root, arch === 'x64' ? 'dist/win-unpacked' : `dist/win-${arch}-unpacked`))
-      checkFilters(path.join('dist', `${pkg.productName}-Setup-${pkg.version}-${arch}.exe`))
+      checkFilters(path.join('dist', `${name}-Setup-${v}-${arch}.exe`))
     }
   }
   if (which === 'all' || which === 'linux') {
@@ -129,6 +141,7 @@ try {
   run('pnpm', ['exec', 'electron-vite', 'build'])
 }
 
-const made = fs.readdirSync(path.join(root, 'dist')).filter((f) => f.startsWith(`${pkg.productName}-`) && /\.(dmg|exe|deb|AppImage)$/.test(f) && f.includes(pkg.version))
-console.log(`\nrelease: ${pkg.productName} ${pkg.version}, no updater, no feed file`)
-for (const f of made) console.log(`release: dist/${f}`)
+const missing = expected.filter((f) => !fs.existsSync(path.join(root, 'dist', f)))
+if (missing.length) fail(`not built: ${missing.join(', ')}`)
+console.log(`\nrelease: ${name} ${v}, no updater, no feed file`)
+for (const f of expected) console.log(`release: dist/${f}`)
