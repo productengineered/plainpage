@@ -1,12 +1,12 @@
 # Plainpage
 
-A markdown editor for macOS and Windows. Free, open source, file-first, and
+A markdown editor for macOS, Windows, and Linux. Free, open source, file-first, and
 unreasonably well-typeset.
 
 Plainpage is built on [**Foolscap**](https://github.com/seamoss/Foolscap) by
 Seánan McCullough — all of the craft in the editor is his. This version adds a
 few features that haven't landed upstream yet (a copy button on code blocks,
-double-click that keeps your place in code) and a Windows build. It's
+double-click that keeps your place in code) and Windows and Linux builds. It's
 maintained by [@productengineered](https://github.com/productengineered) for
 students; it is not an official Foolscap release, so please send Plainpage
 issues here rather than to Foolscap.
@@ -30,7 +30,7 @@ what you wrote.
 - Paste images from the clipboard, or drop them in, into a sibling `assets/` folder
 - Tabs and windows — drag a tab out and it becomes a window — with full session restore: quitting is silent and the next launch sets the desk back up, unsaved drafts included
 - Self-contained HTML export and typeset PDF export with the editor's real fonts — pretty-wrapped, hyphenated, headings balanced
-- Runs on macOS and Windows
+- Runs on macOS, Windows, and Linux (Debian/Ubuntu .deb, or an AppImage)
 
 ## Install
 
@@ -58,6 +58,22 @@ will ask once whether you trust it. That's expected — here's the one-time step
      xattr -dr com.apple.quarantine /Applications/Plainpage.app
      ```
 3. After that, it opens normally.
+
+### Linux (Debian, Ubuntu)
+
+1. Download `Plainpage-<version>-amd64.deb` (or `-arm64.deb` on an ARM
+   machine).
+2. Install it from a terminal in the folder you downloaded it to:
+   ```
+   sudo apt install ./Plainpage-*-amd64.deb
+   ```
+   (use `arm64` in place of `amd64` on an ARM machine).
+3. Plainpage appears in your applications list. Markdown files can be opened
+   with it from the file manager (right-click → Open With).
+
+On another distribution, use the `.AppImage` instead: make it executable
+(`chmod +x Plainpage-*.AppImage`) and run it. It needs FUSE 2
+(`libfuse2t64` on Debian 13 and Ubuntu 24.04+, `libfuse2` on older releases).
 
 Plainpage doesn't update itself; download a new version from Releases when
 one comes out. Your documents and settings carry over.

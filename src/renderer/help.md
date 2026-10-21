@@ -2,7 +2,7 @@
 
 **Plainpage** is a free markdown editor for writing plain-text documents.
 It is built on [Foolscap](https://github.com/seamoss/Foolscap) by Seánan
-McCullough, with a few additions and a Windows build. This guide is itself
+McCullough, with a few additions and Windows and Linux builds. This guide is itself
 a markdown document, shown the same way your own documents are.
 
 *Press `Escape`, or double-click anywhere on this page, to close it and
