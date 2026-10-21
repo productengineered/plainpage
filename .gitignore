@@ -7,3 +7,5 @@ PLAYGROUND.md
 assets/
 *.provisionprofile
 coverage/
+.e2e-tmp/
+.test-tmp/

@@ -5,10 +5,10 @@
  * change needs a case here. Node 22+ (built-in WebSocket), no dependencies. */
 import { spawn } from 'node:child_process'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 export const ROOT = resolve(import.meta.dirname, '../..')
+const E2E_TMP = join(ROOT, '.e2e-tmp')
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 let nextPort = 9400 + (process.pid % 200)
@@ -16,7 +16,10 @@ let nextPort = 9400 + (process.pid % 200)
 /* One app instance: its own userData (session, positions, history, lock),
  * its own working folder for documents, its own debugging port. */
 export async function launch({ files = [], edition } = {}) {
-  const dir = await mkdtemp(join(tmpdir(), 'foolscap-e2e-'))
+  // Inside the repo (gitignored), not the system temp folder: nothing a
+  // test run writes leaves the working tree, and close() removes it.
+  await mkdirp(E2E_TMP)
+  const dir = await mkdtemp(join(E2E_TMP, 'run-'))
   const userData = join(dir, 'userdata')
   const docs = join(dir, 'docs')
   await Promise.all([mkdirp(userData), mkdirp(docs)])
