@@ -98,28 +98,16 @@ pnpm dev        # run in development
 pnpm test       # vitest
 pnpm typecheck
 pnpm pack:app   # unsigned local app build (dist/)
-pnpm dist       # full installers
 ```
 
-## Building
+Release installers have no auto-updater and are unsigned. Build them with
+the release script, which handles the per-architecture details (one NSIS
+installer per arch, the ARM64 compression fix, no update feed file):
 
 ```
-pnpm install
-pnpm dev        # run in development
-pnpm test       # vitest
-pnpm typecheck
-```
-
-Release builds have no auto-updater (`FOOLSCAP_EDITION=store`):
-
-```
-# macOS
-FOOLSCAP_EDITION=store CSC_IDENTITY_AUTO_DISCOVERY=false pnpm exec electron-vite build
-pnpm exec electron-builder --mac dmg --arm64 --x64 --publish never
-
-# Windows (builds fine from a Mac)
-FOOLSCAP_EDITION=store pnpm exec electron-vite build
-pnpm exec electron-builder --win nsis --x64 --arm64 --publish never
+pnpm release        # everything (run on a Mac; on Windows use pnpm release win)
+pnpm release mac    # Plainpage-<version>-{arm64,x64}.dmg
+pnpm release win    # Plainpage-Setup-<version>-{x64,arm64}.exe (builds fine from a Mac)
 ```
 
 ## License

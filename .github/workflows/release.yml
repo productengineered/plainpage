@@ -17,11 +17,12 @@ on:
     # are records, not releases: the Store edition never goes to GitHub.
     tags: ['v*', '!v*-mas*']
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   release:
+    permissions:
+      contents: write
     # macOS-only for now — nobody here runs the others (README: Platform).
     # Pinned, not latest: the macOS 26 image's 25.6 update broke
     # electron-builder's temporary signing keychain ("SecKeychainUnlock: The
@@ -30,9 +31,11 @@ jobs:
     # releases. macOS 15 is the last image class that signs.
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: pnpm
