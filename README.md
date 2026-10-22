@@ -124,6 +124,7 @@ installer per arch, the ARM64 compression fix, no update feed file):
 pnpm release        # everything (run on a Mac; on Windows use pnpm release win)
 pnpm release mac    # Plainpage-<version>-{arm64,x64}.dmg
 pnpm release win    # Plainpage-Setup-<version>-{x64,arm64}.exe (builds fine from a Mac)
+pnpm release linux  # Plainpage-<version>-{amd64,arm64}.deb and AppImages
 ```
 
 ## License
