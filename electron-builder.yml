@@ -1,6 +1,6 @@
 # Packaging (Phase 5). Local unsigned build: `pnpm pack:app` (--dir) or
-# `pnpm dist`. Signing and notarization activate automatically when the CI
-# secrets are present — see .github/workflows/release.yml.
+# `pnpm dist`. Plainpage release installers come from `pnpm release`
+# (scripts/dist-plainpage.cjs), unsigned.
 appId: io.github.productengineered.plainpage
 productName: Plainpage
 copyright: © 2026 productengineered; built on Foolscap © 2026 Seánan McCullough
