@@ -169,8 +169,16 @@ const editorTheme = EditorView.theme({
   /* A response table (table-model isResponseTable): the label column is
    * exactly as wide as its text, the answer column takes the rest. */
   '.fs-table-grid .fs-response-table tr > :first-child': {
-    width: '1%',
+    width: '1%'
+  },
+  // Not while editing: the editing cell's pre-wrap shows Shift-Enter breaks.
+  '.fs-table-grid .fs-response-table tr > :first-child:not(.fs-editing-cell)': {
     whiteSpace: 'nowrap'
+  },
+  // A long token typed into the answer wraps instead of pushing the split
+  // over before the commit rebuild can mark the cell breakable.
+  '.fs-table-grid .fs-response-table tr > :last-child': {
+    overflowWrap: 'anywhere'
   },
   /* The cell being edited in place: an inset ring (outline-offset pulls it
    * inward) so focusing a cell never shifts layout. pre-wrap: plaintext

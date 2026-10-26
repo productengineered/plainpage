@@ -732,6 +732,10 @@ body {
   white-space: nowrap;
 }
 
+.preview-doc .fs-response-table tr > :last-child {
+  overflow-wrap: anywhere;
+}
+
 /* Table column controls — quiet chip bar above a hovered table. */
 .table-controls {
   position: fixed;

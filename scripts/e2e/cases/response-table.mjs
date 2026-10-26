@@ -53,14 +53,18 @@ export async function run() {
     expect(grid[0].answer > 0.7, `editor: the answer column fills the rest (${grid[0].answer})`).toBe(true)
     expect(grid[1].response, 'editor: an ordinary table is not a response table').toBe(false)
 
-    // Type a short answer into the empty cell; the split stays where it was.
+    // Type an answer — one long unbroken token — into the empty cell; the
+    // split stays where it was while typing and after the commit.
+    const LONG = 'https://example.com/' + 'x'.repeat(60)
     const at = await app.evaluate(`(() => { const r = document.querySelector('.cm-content .fs-response-table th:last-child').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 } })()`)
     await app.click(at.x, at.y)
     await app.until(`!!document.querySelector('.fs-editing-cell')`, { label: 'cell editing' })
-    await app.type('ok')
+    await app.type(LONG)
+    const typing = await app.evaluate(measure(`document.querySelector('.cm-content')`))
+    expect(typing[0].label, 'the label column holds while typing').toBeCloseTo(grid[0].label, 0.01)
     const heading = await app.evaluate(`(() => { const r = document.querySelector('.cm-content .cm-line').getBoundingClientRect(); return { x: r.left + 4, y: r.top + r.height / 2 } })()`)
     await app.click(heading.x, heading.y)
-    await app.until(`!document.querySelector('.fs-editing-cell') && $.view.state.doc.toString().includes('| ok')`, { label: 'answer committed' })
+    await app.until(`!document.querySelector('.fs-editing-cell') && $.view.state.doc.toString().includes(${JSON.stringify(LONG)})`, { label: 'answer committed' })
     const after = await app.evaluate(measure(`document.querySelector('.cm-content')`))
     expect(after[0].response, 'still a response table after answering').toBe(true)
     expect(after[0].label, 'the label column did not move').toBeCloseTo(grid[0].label, 0.01)
