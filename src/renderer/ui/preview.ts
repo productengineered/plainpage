@@ -3,6 +3,7 @@ import {
   columnDisplayWidth,
   formatTable,
   hasLongToken,
+  isResponseTable,
   parseTable,
   setColumnWidth,
   tableSourceAt
@@ -436,7 +437,15 @@ export class Preview {
     for (const table of this.el.querySelectorAll<HTMLTableElement>('table[data-pos]')) {
       const source = tableSourceAt(this.markdown, Number(table.dataset['pos']))
       if (!source) continue
+      for (const cell of table.querySelectorAll('td, th')) {
+        if (hasLongToken(cell.textContent ?? '')) cell.classList.add('fs-cell-breakable')
+      }
       const model = parseTable(source.text)
+      // A response table sizes itself in CSS (.fs-response-table).
+      if (isResponseTable(model)) {
+        table.classList.add('fs-response-table')
+        continue
+      }
       const weights = model.header.map((_, i) => columnDisplayWidth(model, i))
       const total = weights.reduce((a, b) => a + b, 0)
       if (weights.length === 0 || total <= 0) continue
@@ -448,9 +457,6 @@ export class Preview {
       }
       table.prepend(colgroup)
       table.style.width = '100%'
-      for (const cell of table.querySelectorAll('td, th')) {
-        if (hasLongToken(cell.textContent ?? '')) cell.classList.add('fs-cell-breakable')
-      }
     }
   }
 
@@ -461,6 +467,8 @@ export class Preview {
     const cell = target?.closest<HTMLTableCellElement>('td, th')
     const table = cell?.closest('table')
     if (!cell || !table || table.dataset['pos'] === undefined) return null
+    // A response table's columns are fixed by CSS; nothing to drag.
+    if (table.classList.contains('fs-response-table')) return null
     const row = cell.parentElement
     if (!(row instanceof HTMLTableRowElement)) return null
     const rect = cell.getBoundingClientRect()

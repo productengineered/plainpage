@@ -17,6 +17,7 @@ import {
   insertColumn,
   insertRow,
   isDelimiterRow,
+  isResponseTable,
   normalizeTable,
   parseTable,
   tableCellRanges
@@ -405,5 +406,31 @@ describe('hasLongToken — a cell that must be allowed to break mid-token', () =
   it('the threshold is exact', () => {
     expect(hasLongToken('x'.repeat(24))).toBe(false)
     expect(hasLongToken('x'.repeat(25))).toBe(true)
+  })
+})
+
+describe('isResponseTable', () => {
+  const is = (text: string): boolean => isResponseTable(parseTable(text))
+
+  it('is a two-column table whose first header ends in "response:"', () => {
+    expect(is('| BD RESPONSE: | |\n| --- | --- |')).toBe(true)
+    expect(is('| bd response: | Looks good |\n| ------------ | ---------- |')).toBe(true)
+    expect(is('| Response: | |\n| --- | --- |')).toBe(true)
+  })
+
+  it('stays one with body rows', () => {
+    expect(is('| BD RESPONSE: | first |\n| --- | --- |\n| | second |')).toBe(true)
+  })
+
+  it('needs exactly two columns', () => {
+    expect(is('| BD RESPONSE: |\n| --- |')).toBe(false)
+    expect(is('| BD RESPONSE: | | |\n| --- | --- | --- |')).toBe(false)
+  })
+
+  it('needs the label to end in "response:"', () => {
+    expect(is('| BD RESPONSE | |\n| --- | --- |')).toBe(false)
+    expect(is('| Response: notes | |\n| --- | --- |')).toBe(false)
+    expect(is('| Name | Notes |\n| --- | --- |')).toBe(false)
+    expect(is('| | BD RESPONSE: |\n| --- | --- |')).toBe(false)
   })
 })

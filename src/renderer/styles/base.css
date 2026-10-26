@@ -721,6 +721,17 @@ body {
   background: var(--paper-sunk);
 }
 
+/* A response table (table-model isResponseTable): the label column is
+ * exactly as wide as its text, the answer column takes the rest. */
+.preview-doc table.fs-response-table {
+  width: 100%;
+}
+
+.preview-doc .fs-response-table tr > :first-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
 /* Table column controls — quiet chip bar above a hovered table. */
 .table-controls {
   position: fixed;

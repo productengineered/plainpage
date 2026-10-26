@@ -166,6 +166,12 @@ const editorTheme = EditorView.theme({
     fontWeight: 'var(--weight-ui)',
     background: 'var(--paper-sunk)'
   },
+  /* A response table (table-model isResponseTable): the label column is
+   * exactly as wide as its text, the answer column takes the rest. */
+  '.fs-table-grid .fs-response-table tr > :first-child': {
+    width: '1%',
+    whiteSpace: 'nowrap'
+  },
   /* The cell being edited in place: an inset ring (outline-offset pulls it
    * inward) so focusing a cell never shifts layout. pre-wrap: plaintext
    * editing breaks a line (Shift-Enter) with a newline character, and it
