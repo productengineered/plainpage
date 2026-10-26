@@ -142,6 +142,17 @@ export function hasLongToken(text: string): boolean {
   return LONG_TOKEN_RE.test(text)
 }
 
+/* A response table: two columns whose first header cell is a label ending
+ * in "response:" — `| BD RESPONSE: | |` — a place to write back to the
+ * document's author. It renders as a form row rather than proportioned
+ * columns: the label column shrinks to its text, the answer cell takes the
+ * rest of the width, and neither moves while the answer is typed. */
+const RESPONSE_LABEL_RE = /response:$/i
+
+export function isResponseTable(model: TableModel): boolean {
+  return model.header.length === 2 && RESPONSE_LABEL_RE.test((model.header[0] ?? '').trim())
+}
+
 export function formatTable(model: TableModel): string {
   const columns = model.header.length
   const widths = Array.from({ length: columns }, (_, i) => columnWidth(model, i))

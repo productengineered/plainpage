@@ -1,8 +1,10 @@
 import { resolveImageSrc } from '../editor/live-preview/images'
 import {
   columnDisplayWidth,
+  commitCell,
   formatTable,
   hasLongToken,
+  isResponseTable,
   parseTable,
   setColumnWidth,
   tableSourceAt
@@ -225,7 +227,12 @@ export function nearestSpanIndex(
  * their columns proportioned by the model's display widths, and dragging a
  * boundary between two columns redistributes them — written back to the
  * markdown source through the applyEdit hook (absent for the help pane,
- * which is genuinely read-only). */
+ * which is genuinely read-only).
+ *
+ * And response tables (table-model isResponseTable): their answer cells
+ * take a click and typing right here, so a reviewer can write back to the
+ * document while its links stay one plain click away. Every keystroke
+ * writes through applyEdit; the pane re-renders when the answer is done. */
 
 interface ColumnResize {
   cols: HTMLTableColElement[]
@@ -241,6 +248,13 @@ interface ColumnResize {
   onUp: () => void
 }
 
+interface AnswerEdit {
+  cell: HTMLElement
+  /* The table's source offset — fixed while its own cells change. */
+  from: number
+  row: number
+}
+
 /* Enough for a working set of tabs; each entry is one document's HTML. */
 const RENDER_CACHE_SIZE = 12
 
@@ -251,6 +265,10 @@ export class Preview {
   private markdown = ''
   private docDir: string | null = null
   private resize: ColumnResize | null = null
+  private answer: AnswerEdit | null = null
+  /* An answer clicked while another was open, by index among answers. */
+  private pendingAnswer: number | null = null
+  private pointerDown = false
   /* Renders are async and can overlap — two files opened at once, a tab
    * switch mid-render. Only the newest show may touch the pane; an older
    * one finishing later must not overwrite its HTML or its visibility. */
@@ -274,6 +292,7 @@ export class Preview {
 
     this.el.addEventListener('dblclick', (event) => {
       const target = event.target instanceof Element ? event.target : null
+      if (target?.closest('.fs-response-answer')) return
       // Off any stamped element — the margin, the gap between blocks — the
       // nearest block stands in, so the page still holds still.
       const holder = target?.closest<HTMLElement>('[data-pos]') ?? this.stampedNearest(event.clientY)?.el
@@ -328,6 +347,9 @@ export class Preview {
         this.el.style.cursor = this.boundaryUnder(event) ? 'col-resize' : ''
       })
       this.el.addEventListener('mousedown', (event) => this.startResize(event))
+      this.el.addEventListener('mousedown', (event) => this.startAnswer(event))
+      this.el.addEventListener('mousedown', () => (this.pointerDown = true), { capture: true })
+      window.addEventListener('mouseup', () => (this.pointerDown = false), { capture: true })
     }
   }
 
@@ -356,6 +378,9 @@ export class Preview {
   }
 
   private render(html: string): void {
+    // An answer still open in the old DOM is gone with it; its typing is
+    // already in the source.
+    this.answer = null
     this.el.innerHTML = `<main class="preview-doc">${html}</main>`
     // The pipeline escapes raw HTML, so this is our own output only.
     for (const img of this.el.querySelectorAll('img')) {
@@ -436,7 +461,23 @@ export class Preview {
     for (const table of this.el.querySelectorAll<HTMLTableElement>('table[data-pos]')) {
       const source = tableSourceAt(this.markdown, Number(table.dataset['pos']))
       if (!source) continue
+      for (const cell of table.querySelectorAll('td, th')) {
+        if (hasLongToken(cell.textContent ?? '')) cell.classList.add('fs-cell-breakable')
+      }
       const model = parseTable(source.text)
+      // A response table sizes itself in CSS (.fs-response-table).
+      if (isResponseTable(model)) {
+        table.classList.add('fs-response-table')
+        if (this.applyEdit) {
+          table.querySelectorAll('tr').forEach((tr, row) => {
+            const cell = tr.lastElementChild
+            if (!(cell instanceof HTMLElement) || tr.children.length !== 2) return
+            cell.classList.add('fs-response-answer')
+            cell.dataset['row'] = String(row)
+          })
+        }
+        continue
+      }
       const weights = model.header.map((_, i) => columnDisplayWidth(model, i))
       const total = weights.reduce((a, b) => a + b, 0)
       if (weights.length === 0 || total <= 0) continue
@@ -448,10 +489,123 @@ export class Preview {
       }
       table.prepend(colgroup)
       table.style.width = '100%'
-      for (const cell of table.querySelectorAll('td, th')) {
-        if (hasLongToken(cell.textContent ?? '')) cell.classList.add('fs-cell-breakable')
-      }
     }
+  }
+
+  /* ---- response answers: typed in place ---- */
+
+  private startAnswer(event: MouseEvent): void {
+    if (event.button !== 0) return
+    const target = event.target instanceof Element ? event.target : null
+    // A link inside an answer still opens; the cell being edited keeps the
+    // browser's own caret placement and selection.
+    if (!target || target.closest('a[href]')) return
+    const cell = target.closest<HTMLElement>('.fs-response-answer')
+    if (!cell || this.answer?.cell === cell) return
+    event.preventDefault()
+    if (this.answer) {
+      // Another answer is open, and finishing it re-renders the pane (every
+      // later table may have moved): begin this one in the new DOM, found
+      // again by its index.
+      this.pendingAnswer = [...this.el.querySelectorAll('.fs-response-answer')].indexOf(cell)
+      this.answer.cell.blur()
+      return
+    }
+    this.beginAnswer(cell)
+  }
+
+  private beginAnswer(cell: HTMLElement): void {
+    const from = Number(cell.closest<HTMLTableElement>('table[data-pos]')?.dataset['pos'])
+    const source = Number.isNaN(from) ? null : tableSourceAt(this.markdown, from)
+    if (!source) return
+    const row = Number(cell.dataset['row'])
+    const model = parseTable(source.text)
+    const raw = (row === 0 ? model.header[1] : model.rows[row - 1]?.[1]) ?? ''
+    // The source, not the rendering: the answer's markdown is what's edited.
+    cell.textContent = raw.replace(/<br\s*\/?>/gi, '\n')
+    cell.contentEditable = 'plaintext-only'
+    cell.classList.add('fs-editing-cell')
+    this.answer = { cell, from, row }
+    cell.addEventListener('input', this.onAnswerInput)
+    cell.addEventListener('compositionend', this.onAnswerInput)
+    cell.addEventListener('keydown', this.onAnswerKey)
+    cell.addEventListener('blur', this.onAnswerBlur)
+    cell.focus()
+    const caret = document.getSelection()
+    caret?.selectAllChildren(cell)
+    caret?.collapseToEnd()
+  }
+
+  /* The open answer's text into the source. Mid-composition input waits
+   * for compositionend, which lands here too. */
+  private writeAnswer(): void {
+    const answer = this.answer
+    if (!answer || !this.applyEdit) return
+    const source = tableSourceAt(this.markdown, answer.from)
+    if (!source) return
+    const next = commitCell(source.text, answer.row, 1, answer.cell.textContent ?? '')
+    if (next === null) return
+    const updated = this.applyEdit(answer.from, source.to, next)
+    // Later data-pos stamps go stale until the re-render on finish; the
+    // table's own offset does not move.
+    if (updated !== null) this.markdown = updated
+  }
+
+  private readonly onAnswerInput = (event: Event): void => {
+    if (event instanceof InputEvent && event.isComposing) return
+    this.writeAnswer()
+  }
+
+  /* Enter or Escape finishes the answer (Escape must not also leave
+   * preview); Shift-Enter is a line break, the browser's own. An Enter
+   * that confirms an IME composition is the composition's. */
+  private readonly onAnswerKey = (event: KeyboardEvent): void => {
+    if (event.isComposing) return
+    if ((event.key === 'Enter' && !event.shiftKey) || event.key === 'Escape') {
+      event.preventDefault()
+      event.stopPropagation()
+      this.answer?.cell.blur()
+    }
+  }
+
+  private readonly onAnswerBlur = (): void => this.finishAnswer()
+
+  private finishAnswer(): void {
+    const answer = this.answer
+    if (!answer) return
+    this.writeAnswer()
+    this.answer = null
+    answer.cell.removeEventListener('input', this.onAnswerInput)
+    answer.cell.removeEventListener('compositionend', this.onAnswerInput)
+    answer.cell.removeEventListener('keydown', this.onAnswerKey)
+    answer.cell.removeEventListener('blur', this.onAnswerBlur)
+    answer.cell.removeAttribute('contenteditable')
+    answer.cell.classList.remove('fs-editing-cell')
+    // A click elsewhere ended the answer: re-render only once it lands, so
+    // a link clicked straight out of an answer still gets its click.
+    if (this.pointerDown) {
+      window.addEventListener('mouseup', () => setTimeout(() => void this.rerenderAfterAnswer()), { once: true })
+    } else {
+      void this.rerenderAfterAnswer()
+    }
+  }
+
+  /* The answer shows as markdown again, and every later data-pos picks up
+   * the table's new length; then any answer clicked meanwhile begins. */
+  private async rerenderAfterAnswer(): Promise<void> {
+    const scroll = this.el.scrollTop
+    const gen = this.showGen
+    const markdown = this.markdown
+    const html = await renderMarkdown(markdown, { sourcePositions: true })
+    // A newer show owns the pane, or the source moved on: that render wins.
+    if (gen !== this.showGen || markdown !== this.markdown || this.answer) return
+    this.render(html)
+    this.el.scrollTop = scroll
+    const pending = this.pendingAnswer
+    this.pendingAnswer = null
+    if (pending === null) return
+    const cell = this.el.querySelectorAll<HTMLElement>('.fs-response-answer')[pending]
+    if (cell) this.beginAnswer(cell)
   }
 
   /* The column boundary under the pointer: within a few px of the edge
@@ -461,6 +615,8 @@ export class Preview {
     const cell = target?.closest<HTMLTableCellElement>('td, th')
     const table = cell?.closest('table')
     if (!cell || !table || table.dataset['pos'] === undefined) return null
+    // A response table's columns are fixed by CSS; nothing to drag.
+    if (table.classList.contains('fs-response-table')) return null
     const row = cell.parentElement
     if (!(row instanceof HTMLTableRowElement)) return null
     const rect = cell.getBoundingClientRect()

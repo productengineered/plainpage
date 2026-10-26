@@ -29,6 +29,7 @@ import {
   hasLongToken,
   insertRow,
   isDelimiterRow,
+  isResponseTable,
   parseTable
 } from '../table-model'
 import { selectionTouches } from './marks'
@@ -118,15 +119,21 @@ class TableGridWidget extends WidgetType {
 
     const model = parseTable(this.text)
     const table = document.createElement('table')
-    const colgroup = document.createElement('colgroup')
-    const widths = model.header.map((_, i) => columnDisplayWidth(model, i))
-    const total = widths.reduce((a, b) => a + b, 0) || 1
-    for (const w of widths) {
-      const col = document.createElement('col')
-      col.style.width = `${(w / total) * 100}%`
-      colgroup.append(col)
+    // A response table sizes itself in CSS (.fs-response-table): no
+    // colgroup, so its columns ignore recorded widths and content ratios.
+    if (isResponseTable(model)) {
+      table.className = 'fs-response-table'
+    } else {
+      const colgroup = document.createElement('colgroup')
+      const widths = model.header.map((_, i) => columnDisplayWidth(model, i))
+      const total = widths.reduce((a, b) => a + b, 0) || 1
+      for (const w of widths) {
+        const col = document.createElement('col')
+        col.style.width = `${(w / total) * 100}%`
+        colgroup.append(col)
+      }
+      table.append(colgroup)
     }
-    table.append(colgroup)
 
     // Rows come from the raw lines, not model.rows: the model trims cell
     // text, and the click math needs each cell to hold the byte-identical
