@@ -1,6 +1,7 @@
 import { resolveImageSrc } from '../editor/live-preview/images'
 import {
   columnDisplayWidth,
+  commitCell,
   formatTable,
   hasLongToken,
   isResponseTable,
@@ -226,7 +227,12 @@ export function nearestSpanIndex(
  * their columns proportioned by the model's display widths, and dragging a
  * boundary between two columns redistributes them — written back to the
  * markdown source through the applyEdit hook (absent for the help pane,
- * which is genuinely read-only). */
+ * which is genuinely read-only).
+ *
+ * And response tables (table-model isResponseTable): their answer cells
+ * take a click and typing right here, so a reviewer can write back to the
+ * document while its links stay one plain click away. Every keystroke
+ * writes through applyEdit; the pane re-renders when the answer is done. */
 
 interface ColumnResize {
   cols: HTMLTableColElement[]
@@ -242,6 +248,13 @@ interface ColumnResize {
   onUp: () => void
 }
 
+interface AnswerEdit {
+  cell: HTMLElement
+  /* The table's source offset — fixed while its own cells change. */
+  from: number
+  row: number
+}
+
 /* Enough for a working set of tabs; each entry is one document's HTML. */
 const RENDER_CACHE_SIZE = 12
 
@@ -252,6 +265,7 @@ export class Preview {
   private markdown = ''
   private docDir: string | null = null
   private resize: ColumnResize | null = null
+  private answer: AnswerEdit | null = null
   /* Renders are async and can overlap — two files opened at once, a tab
    * switch mid-render. Only the newest show may touch the pane; an older
    * one finishing later must not overwrite its HTML or its visibility. */
@@ -275,6 +289,7 @@ export class Preview {
 
     this.el.addEventListener('dblclick', (event) => {
       const target = event.target instanceof Element ? event.target : null
+      if (target?.closest('.fs-response-answer')) return
       // Off any stamped element — the margin, the gap between blocks — the
       // nearest block stands in, so the page still holds still.
       const holder = target?.closest<HTMLElement>('[data-pos]') ?? this.stampedNearest(event.clientY)?.el
@@ -329,6 +344,7 @@ export class Preview {
         this.el.style.cursor = this.boundaryUnder(event) ? 'col-resize' : ''
       })
       this.el.addEventListener('mousedown', (event) => this.startResize(event))
+      this.el.addEventListener('mousedown', (event) => this.startAnswer(event))
     }
   }
 
@@ -357,6 +373,9 @@ export class Preview {
   }
 
   private render(html: string): void {
+    // An answer still open in the old DOM is gone with it; its typing is
+    // already in the source.
+    this.answer = null
     this.el.innerHTML = `<main class="preview-doc">${html}</main>`
     // The pipeline escapes raw HTML, so this is our own output only.
     for (const img of this.el.querySelectorAll('img')) {
@@ -444,6 +463,14 @@ export class Preview {
       // A response table sizes itself in CSS (.fs-response-table).
       if (isResponseTable(model)) {
         table.classList.add('fs-response-table')
+        if (this.applyEdit) {
+          table.querySelectorAll('tr').forEach((tr, row) => {
+            const cell = tr.lastElementChild
+            if (!(cell instanceof HTMLElement) || tr.children.length !== 2) return
+            cell.classList.add('fs-response-answer')
+            cell.dataset['row'] = String(row)
+          })
+        }
         continue
       }
       const weights = model.header.map((_, i) => columnDisplayWidth(model, i))
@@ -458,6 +485,81 @@ export class Preview {
       table.prepend(colgroup)
       table.style.width = '100%'
     }
+  }
+
+  /* ---- response answers: typed in place ---- */
+
+  private startAnswer(event: MouseEvent): void {
+    if (event.button !== 0) return
+    const target = event.target instanceof Element ? event.target : null
+    // A link inside an answer still opens; the cell being edited keeps the
+    // browser's own caret placement and selection.
+    if (!target || target.closest('a[href]')) return
+    const cell = target.closest<HTMLElement>('.fs-response-answer')
+    if (!cell || this.answer?.cell === cell) return
+    const from = Number(cell.closest<HTMLTableElement>('table[data-pos]')?.dataset['pos'])
+    const source = Number.isNaN(from) ? null : tableSourceAt(this.markdown, from)
+    if (!source) return
+    event.preventDefault()
+    const row = Number(cell.dataset['row'])
+    const model = parseTable(source.text)
+    const raw = (row === 0 ? model.header[1] : model.rows[row - 1]?.[1]) ?? ''
+    // The source, not the rendering: the answer's markdown is what's edited.
+    cell.textContent = raw.replace(/<br\s*\/?>/gi, '\n')
+    cell.contentEditable = 'plaintext-only'
+    cell.classList.add('fs-editing-cell')
+    this.answer = { cell, from, row }
+    cell.addEventListener('input', this.onAnswerInput)
+    cell.addEventListener('keydown', this.onAnswerKey)
+    cell.addEventListener('blur', this.onAnswerBlur)
+    cell.focus()
+    const caret = document.getSelection()
+    caret?.selectAllChildren(cell)
+    caret?.collapseToEnd()
+  }
+
+  private readonly onAnswerInput = (event: Event): void => {
+    const answer = this.answer
+    if (!answer || !this.applyEdit || (event as InputEvent).isComposing) return
+    const source = tableSourceAt(this.markdown, answer.from)
+    if (!source) return
+    const next = commitCell(source.text, answer.row, 1, answer.cell.textContent ?? '')
+    if (next === null) return
+    const updated = this.applyEdit(answer.from, source.to, next)
+    // Later data-pos stamps go stale until the re-render on finish; the
+    // table's own offset does not move.
+    if (updated !== null) this.markdown = updated
+  }
+
+  /* Enter or Escape finishes the answer (Escape must not also leave
+   * preview); Shift-Enter is a line break, the browser's own. */
+  private readonly onAnswerKey = (event: KeyboardEvent): void => {
+    if ((event.key === 'Enter' && !event.shiftKey) || event.key === 'Escape') {
+      event.preventDefault()
+      event.stopPropagation()
+      this.answer?.cell.blur()
+    }
+  }
+
+  private readonly onAnswerBlur = (): void => void this.finishAnswer()
+
+  private async finishAnswer(): Promise<void> {
+    const answer = this.answer
+    if (!answer) return
+    this.answer = null
+    answer.cell.removeEventListener('input', this.onAnswerInput)
+    answer.cell.removeEventListener('keydown', this.onAnswerKey)
+    answer.cell.removeEventListener('blur', this.onAnswerBlur)
+    answer.cell.removeAttribute('contenteditable')
+    answer.cell.classList.remove('fs-editing-cell')
+    // Re-render: the answer shows as markdown again, and every later
+    // data-pos picks up the table's new length.
+    const scroll = this.el.scrollTop
+    const gen = this.showGen
+    const html = await renderMarkdown(this.markdown, { sourcePositions: true })
+    if (gen !== this.showGen) return // a newer show owns the pane now
+    this.render(html)
+    this.el.scrollTop = scroll
   }
 
   /* The column boundary under the pointer: within a few px of the edge

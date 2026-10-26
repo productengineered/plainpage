@@ -58,6 +58,11 @@ its corner, and long lines wrap so a whole prompt is in view.
   `⌥`-click a cell for the raw pipes — that's where hovering shows column
   controls and pipe edges drag. Settings ▸ Writing turns the grid off
   entirely.
+- **Response rows** — a two-column table whose first cell ends in
+  "response:" (`| BD RESPONSE: | |`) is a place to answer the document's
+  author. The label stays as narrow as its text, and in the finished page
+  (`⌘E`) you click the empty cell and type, links still a click away;
+  `Enter` or `Escape` finishes.
 - **Images** — paste a screenshot, or drop a picture from Finder (File
   Explorer on Windows); it lands
   in an `assets/` folder next to your document with a relative link (a

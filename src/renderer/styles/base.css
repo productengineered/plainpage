@@ -736,6 +736,18 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* Answer cells take typing in preview (Preview.startAnswer). */
+.preview-doc .fs-response-answer {
+  cursor: text;
+}
+
+.preview-doc .fs-response-answer.fs-editing-cell {
+  outline: var(--table-edit-ring) solid var(--accent);
+  outline-offset: calc(-1 * var(--table-edit-ring));
+  caret-color: var(--accent);
+  white-space: pre-wrap;
+}
+
 /* Table column controls — quiet chip bar above a hovered table. */
 .table-controls {
   position: fixed;
