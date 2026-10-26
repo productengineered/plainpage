@@ -266,6 +266,9 @@ export class Preview {
   private docDir: string | null = null
   private resize: ColumnResize | null = null
   private answer: AnswerEdit | null = null
+  /* An answer clicked while another was open, by index among answers. */
+  private pendingAnswer: number | null = null
+  private pointerDown = false
   /* Renders are async and can overlap — two files opened at once, a tab
    * switch mid-render. Only the newest show may touch the pane; an older
    * one finishing later must not overwrite its HTML or its visibility. */
@@ -345,6 +348,8 @@ export class Preview {
       })
       this.el.addEventListener('mousedown', (event) => this.startResize(event))
       this.el.addEventListener('mousedown', (event) => this.startAnswer(event))
+      this.el.addEventListener('mousedown', () => (this.pointerDown = true), { capture: true })
+      window.addEventListener('mouseup', () => (this.pointerDown = false), { capture: true })
     }
   }
 
@@ -497,10 +502,22 @@ export class Preview {
     if (!target || target.closest('a[href]')) return
     const cell = target.closest<HTMLElement>('.fs-response-answer')
     if (!cell || this.answer?.cell === cell) return
+    event.preventDefault()
+    if (this.answer) {
+      // Another answer is open, and finishing it re-renders the pane (every
+      // later table may have moved): begin this one in the new DOM, found
+      // again by its index.
+      this.pendingAnswer = [...this.el.querySelectorAll('.fs-response-answer')].indexOf(cell)
+      this.answer.cell.blur()
+      return
+    }
+    this.beginAnswer(cell)
+  }
+
+  private beginAnswer(cell: HTMLElement): void {
     const from = Number(cell.closest<HTMLTableElement>('table[data-pos]')?.dataset['pos'])
     const source = Number.isNaN(from) ? null : tableSourceAt(this.markdown, from)
     if (!source) return
-    event.preventDefault()
     const row = Number(cell.dataset['row'])
     const model = parseTable(source.text)
     const raw = (row === 0 ? model.header[1] : model.rows[row - 1]?.[1]) ?? ''
@@ -510,6 +527,7 @@ export class Preview {
     cell.classList.add('fs-editing-cell')
     this.answer = { cell, from, row }
     cell.addEventListener('input', this.onAnswerInput)
+    cell.addEventListener('compositionend', this.onAnswerInput)
     cell.addEventListener('keydown', this.onAnswerKey)
     cell.addEventListener('blur', this.onAnswerBlur)
     cell.focus()
@@ -518,9 +536,11 @@ export class Preview {
     caret?.collapseToEnd()
   }
 
-  private readonly onAnswerInput = (event: Event): void => {
+  /* The open answer's text into the source. Mid-composition input waits
+   * for compositionend, which lands here too. */
+  private writeAnswer(): void {
     const answer = this.answer
-    if (!answer || !this.applyEdit || (event as InputEvent).isComposing) return
+    if (!answer || !this.applyEdit) return
     const source = tableSourceAt(this.markdown, answer.from)
     if (!source) return
     const next = commitCell(source.text, answer.row, 1, answer.cell.textContent ?? '')
@@ -531,9 +551,16 @@ export class Preview {
     if (updated !== null) this.markdown = updated
   }
 
+  private readonly onAnswerInput = (event: Event): void => {
+    if (event instanceof InputEvent && event.isComposing) return
+    this.writeAnswer()
+  }
+
   /* Enter or Escape finishes the answer (Escape must not also leave
-   * preview); Shift-Enter is a line break, the browser's own. */
+   * preview); Shift-Enter is a line break, the browser's own. An Enter
+   * that confirms an IME composition is the composition's. */
   private readonly onAnswerKey = (event: KeyboardEvent): void => {
+    if (event.isComposing) return
     if ((event.key === 'Enter' && !event.shiftKey) || event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
@@ -541,25 +568,44 @@ export class Preview {
     }
   }
 
-  private readonly onAnswerBlur = (): void => void this.finishAnswer()
+  private readonly onAnswerBlur = (): void => this.finishAnswer()
 
-  private async finishAnswer(): Promise<void> {
+  private finishAnswer(): void {
     const answer = this.answer
     if (!answer) return
+    this.writeAnswer()
     this.answer = null
     answer.cell.removeEventListener('input', this.onAnswerInput)
+    answer.cell.removeEventListener('compositionend', this.onAnswerInput)
     answer.cell.removeEventListener('keydown', this.onAnswerKey)
     answer.cell.removeEventListener('blur', this.onAnswerBlur)
     answer.cell.removeAttribute('contenteditable')
     answer.cell.classList.remove('fs-editing-cell')
-    // Re-render: the answer shows as markdown again, and every later
-    // data-pos picks up the table's new length.
+    // A click elsewhere ended the answer: re-render only once it lands, so
+    // a link clicked straight out of an answer still gets its click.
+    if (this.pointerDown) {
+      window.addEventListener('mouseup', () => setTimeout(() => void this.rerenderAfterAnswer()), { once: true })
+    } else {
+      void this.rerenderAfterAnswer()
+    }
+  }
+
+  /* The answer shows as markdown again, and every later data-pos picks up
+   * the table's new length; then any answer clicked meanwhile begins. */
+  private async rerenderAfterAnswer(): Promise<void> {
     const scroll = this.el.scrollTop
     const gen = this.showGen
-    const html = await renderMarkdown(this.markdown, { sourcePositions: true })
-    if (gen !== this.showGen) return // a newer show owns the pane now
+    const markdown = this.markdown
+    const html = await renderMarkdown(markdown, { sourcePositions: true })
+    // A newer show owns the pane, or the source moved on: that render wins.
+    if (gen !== this.showGen || markdown !== this.markdown || this.answer) return
     this.render(html)
     this.el.scrollTop = scroll
+    const pending = this.pendingAnswer
+    this.pendingAnswer = null
+    if (pending === null) return
+    const cell = this.el.querySelectorAll<HTMLElement>('.fs-response-answer')[pending]
+    if (cell) this.beginAnswer(cell)
   }
 
   /* The column boundary under the pointer: within a few px of the edge

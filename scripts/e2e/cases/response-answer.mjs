@@ -42,15 +42,21 @@ export async function run() {
     expect(await app.previewVisible(), 'still in preview after Enter').toBe(true)
     expect(await app.evaluate(`document.querySelectorAll('.preview .fs-response-answer')[0].textContent`), 'the answer shows in the page').toBe('Looks good')
 
-    // Second answer, after the first table grew: Escape finishes, stays.
+    // Straight from one open answer into the other: the first finishes,
+    // the second opens (after the first table grew), and both land.
+    at = await app.evaluate(answerCenter(0))
+    await app.click(at.x, at.y)
+    await app.until(`!!document.querySelector('.preview .fs-editing-cell')`, { label: 'first answer reopened' })
+    await app.type(', thanks')
     at = await app.evaluate(answerCenter(1))
     await app.click(at.x, at.y)
-    await app.until(`!!document.querySelector('.preview .fs-editing-cell')`, { label: 'second answer editing' })
+    await app.until(`document.querySelector('.preview .fs-editing-cell') === document.querySelectorAll('.preview .fs-response-answer')[1]`, { label: 'second answer editing' })
     await app.type('Skip this one')
     await app.key('Escape')
     await app.until(`!document.querySelector('.preview .fs-editing-cell')`, { label: 'Escape finishes' })
     expect(await app.previewVisible(), 'Escape does not leave preview').toBe(true)
     const text = await app.evaluate(source())
+    expect(text.includes('| BD RESPONSE: | Looks good, thanks |'), 'first answer extended in the source').toBe(true)
     expect(text.includes('| BD RESPONSE: | Skip this one |'), 'second answer in the source').toBe(true)
     expect(text.includes('Between the two.') && text.includes('See [the thread](https://example.com/thread).'), 'the rest of the document is untouched').toBe(true)
 
