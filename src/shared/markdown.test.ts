@@ -1,7 +1,7 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { renderMarkdown } from './markdown'
+import { referenceDefinitions, renderMarkdown } from './markdown'
 
 describe('renderMarkdown — THE pipeline', () => {
   it('renders headings, gfm strikethrough, and tables', async () => {
@@ -88,6 +88,17 @@ describe('renderMarkdown — THE pipeline', () => {
   it('default rendering carries no position stamps (exports stay clean)', async () => {
     const html = await renderMarkdown('# One\n\ntext here')
     expect(html).not.toContain('data-pos')
+  })
+})
+
+describe('referenceDefinitions', () => {
+  it('collects link and footnote definitions as written, nowhere else', () => {
+    const md = 'See [guide][ref] and a note[^n].\n\n[ref]: https://example.com "Guide"\n\n> [q]: https://q.example\n\n[^n]: The note.\n\nPlain text.'
+    expect(referenceDefinitions(md)).toBe('[ref]: https://example.com "Guide"\n\n[q]: https://q.example\n\n[^n]: The note.')
+  })
+
+  it('is empty without definitions', () => {
+    expect(referenceDefinitions('# Just text\n\n- a list')).toBe('')
   })
 })
 

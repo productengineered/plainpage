@@ -447,7 +447,13 @@ export class Preview {
           const source = this.markdown
           const at = source === rendered ? offsets : await this.currentSectionOffsets(source, index)
           if (!at || !this.copyRich) return false
-          return this.copyRich(source.slice(at.from, at.to).trim())
+          // Drop the blank lines around the section, never a content
+          // line's indentation — four spaces can be an indented code block.
+          const section = source
+            .slice(at.from, at.to)
+            .replace(/^(?:[ \t]*\r?\n)+/, '')
+            .replace(/(?:\r?\n[ \t]*)+$/, '')
+          return this.copyRich(section)
         })
       )
     })

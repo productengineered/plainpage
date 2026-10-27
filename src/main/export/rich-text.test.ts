@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
   buildRichText,
+  buildSectionRichText,
   checkboxesToGlyphs,
   cleanDeclarations,
   embedImages,
@@ -187,6 +188,22 @@ describe('the passes over finished HTML, on their own', () => {
     expect(html).not.toContain('copy-section')
     expect(html).not.toContain('data-copy')
     expect(html).not.toContain('<!--')
+  })
+
+  it('a section keeps links whose definitions live elsewhere in the document', async () => {
+    const section = 'Read [the guide][ref].'
+    const doc = `<!-- copy -->\n${section}\n<!-- /copy -->\n\n[ref]: https://example.com/guide`
+    const { html, text } = await buildSectionRichText(section, doc, null, PALETTE)
+    expect(html).toContain('href="https://example.com/guide"')
+    expect(html).not.toContain('[ref]')
+    expect(text).toBe(section)
+  })
+
+  it('a section that opens with an indented code block stays code', async () => {
+    const section = '    alpha\n    beta'
+    const { html } = await buildSectionRichText(section, section, null, PALETTE)
+    expect(html).toContain('<pre')
+    expect(html).toContain('alpha')
   })
 
   it('stripPositions drops copy-section offsets too', () => {

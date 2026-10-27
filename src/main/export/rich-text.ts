@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url'
 import { columnDisplayWidth, parseTable, tableSourceAt } from '../../renderer/editor/table-model'
 import ledgerCss from '../../renderer/styles/themes/ledger.css?raw'
 import tokensCss from '../../renderer/styles/tokens.css?raw'
-import { renderMarkdown } from '../../shared/markdown'
+import { referenceDefinitions, renderMarkdown } from '../../shared/markdown'
 
 /* Copy as Rich Text: the document as the preview renders it, on the
  * clipboard, ready to paste into Google Docs, Word, or a CMS with its
@@ -328,4 +328,19 @@ export async function buildRichText(
    * thing worth having — and nothing that fixes a size. */
   const font = cleanDeclarations(resolveVars('font-family: var(--font-body)', tokens))
   return { html: `<div style="${font}">\n${withImages}\n</div>`, text: markdown }
+}
+
+/* One copy section of a document: rendered with the document's link and
+ * footnote definitions in scope, so a reference defined outside the
+ * section still pastes as a link; the plain flavor is the section alone. */
+export async function buildSectionRichText(
+  section: string,
+  document: string,
+  docDir: string | null,
+  tokens: Map<string, string> = TOKENS
+): Promise<RichText> {
+  const definitions = referenceDefinitions(document)
+  const source = definitions ? `${section}\n\n${definitions}` : section
+  const { html } = await buildRichText(source, docDir, tokens)
+  return { html, text: section }
 }

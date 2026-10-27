@@ -14,7 +14,7 @@ import {
 } from '../shared/types'
 import { renderExportHtml } from './export/html'
 import { printDocument, renderPdf } from './export/pdf'
-import { buildRichText } from './export/rich-text'
+import { buildRichText, buildSectionRichText } from './export/rich-text'
 import { closedTabs } from './closed-tabs'
 import { applyEol, assetName, atomicWriteFile, detectEol, readTextFile, watchFile, type Eol } from './files'
 import { docKey, listSnapshots, pruneSnapshots, readSnapshot, writeSnapshot } from './history-store'
@@ -466,8 +466,12 @@ export class TabSession {
    * document, built the same way. */
   async copyRichText(fragment?: string): Promise<boolean> {
     try {
-      const content = fragment ?? (await this.getRendererContent())
-      const rich = await buildRichText(content, this.path ? dirname(this.path) : null)
+      const content = await this.getRendererContent()
+      const docDir = this.path ? dirname(this.path) : null
+      const rich =
+        fragment === undefined
+          ? await buildRichText(content, docDir)
+          : await buildSectionRichText(fragment, content, docDir)
       clipboard.write({ text: rich.text, html: rich.html })
       return true
     } catch {
