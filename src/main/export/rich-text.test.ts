@@ -174,6 +174,27 @@ describe('the passes over finished HTML, on their own', () => {
     expect(insertColgroups(html, 'no table here')).toBe(html)
   })
 
+  it('a copy section copies as its own rich fragment, markdown as the text flavor', async () => {
+    const section = 'Note **bold**.\n\n- one\n  - two'
+    const { html, text } = await buildRichText(section, null, PALETTE)
+    expect(text).toBe(section)
+    expect(html).toContain('<strong>bold</strong>')
+    expect(html).toMatch(/<ul[^>]*>\s*<li[^>]*>one\s*<ul/)
+  })
+
+  it('a whole document copies its sections without their machinery', async () => {
+    const { html } = await buildRichText('<!-- copy -->\nx\n<!-- /copy -->', null, PALETTE)
+    expect(html).not.toContain('copy-section')
+    expect(html).not.toContain('data-copy')
+    expect(html).not.toContain('<!--')
+  })
+
+  it('stripPositions drops copy-section offsets too', () => {
+    expect(stripPositions('<div class="copy-section" data-copy-from="4" data-copy-to="9" data-pos="0">')).toBe(
+      '<div class="copy-section">'
+    )
+  })
+
   it('stripPositions leaves other data attributes alone', () => {
     expect(stripPositions('<p data-pos="3" data-footnotes>x</p>')).toBe('<p data-footnotes>x</p>')
   })

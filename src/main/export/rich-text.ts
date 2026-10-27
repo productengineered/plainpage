@@ -242,7 +242,7 @@ export function insertColgroups(html: string, markdown: string): string {
 /* Position stamps exist for the colgroups above; nothing downstream wants
  * them, and a paste should carry no machinery. */
 export function stripPositions(html: string): string {
-  return html.replace(/ data-pos="\d+"/g, '')
+  return html.replace(/ data-(?:pos|copy-from|copy-to)="\d+"/g, '')
 }
 
 /* A disabled checkbox is inert markup that most destinations drop

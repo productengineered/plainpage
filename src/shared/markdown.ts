@@ -112,6 +112,8 @@ interface MdastNode {
   type: string
   value?: string
   children?: MdastNode[]
+  position?: { start: { offset?: number }; end: { offset?: number } }
+  data?: { hName?: string; hProperties?: Record<string, unknown> }
 }
 
 const BR_HTML = /^<br\s*\/?>$/i
@@ -137,12 +139,81 @@ function remarkBrTags() {
   }
 }
 
+const COPY_OPEN = /^<!--\s*copy\s*-->$/i
+const COPY_CLOSE = /^<!--\s*\/copy\s*-->$/i
+
+/* Containers whose children are blocks — the only places a marker can
+ * stand on its own line. Inside a paragraph it is inline html, left out. */
+const FLOW_PARENTS = new Set(['root', 'blockquote', 'listItem', 'footnoteDefinition'])
+
+/* A copy section: the blocks between `<!-- copy -->` and `<!-- /copy -->`
+ * (or the end of their container, when the closing marker is missing).
+ * The markers are html comments, so GitHub and every other renderer hide
+ * them, and the file stays plain markdown. The run is wrapped in one
+ * <div class="copy-section">; the preview gives it a copy button. With
+ * source positions, the div also records the markdown between the
+ * markers (data-copy-from/to), which is what the button copies. Markers
+ * don't nest — an opening marker inside an open section is dropped.
+ * (Options ride in an object: unified reads a bare `false` as "plugin
+ * off".) */
+function remarkCopySections({ positions }: { positions: boolean }) {
+  const marker = (node: MdastNode, re: RegExp): boolean =>
+    node.type === 'html' && node.value !== undefined && re.test(node.value.trim())
+  return (tree: MdastNode): void => {
+    const walk = (node: MdastNode): void => {
+      const children = node.children
+      if (!children) return
+      if (FLOW_PARENTS.has(node.type)) {
+        const out: MdastNode[] = []
+        let open: { start: MdastNode; inner: MdastNode[] } | null = null
+        const close = (end: MdastNode | null): void => {
+          if (!open) return
+          const { start, inner } = open
+          const last = inner[inner.length - 1]
+          const from = start.position?.end.offset
+          const to = end ? end.position?.start.offset : last?.position?.end.offset
+          const props: Record<string, unknown> = { className: ['copy-section'] }
+          if (positions && from !== undefined && to !== undefined) {
+            props['dataCopyFrom'] = String(from)
+            props['dataCopyTo'] = String(to)
+          }
+          out.push({
+            type: 'copySection',
+            children: inner,
+            data: { hName: 'div', hProperties: props },
+            ...(start.position && (end ?? last)?.position
+              ? { position: { start: start.position.start, end: (end ?? last)?.position?.end ?? start.position.end } }
+              : {})
+          })
+          open = null
+        }
+        for (const child of children) {
+          if (marker(child, COPY_OPEN)) {
+            if (!open) open = { start: child, inner: [] }
+          } else if (marker(child, COPY_CLOSE)) {
+            close(child)
+          } else if (open) {
+            open.inner.push(child)
+          } else {
+            out.push(child)
+          }
+        }
+        close(null)
+        node.children = out
+      }
+      for (const child of node.children ?? []) walk(child)
+    }
+    walk(tree)
+  }
+}
+
 async function buildProcessor(sourcePositions: boolean) {
   const highlighter = await getHighlighter()
   const base = unified()
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkBrTags)
+    .use(remarkCopySections, { positions: sourcePositions })
     .use(remarkRehype)
     .use(rehypeSlug)
   const positioned = sourcePositions ? base.use(rehypeSourcePositions) : base

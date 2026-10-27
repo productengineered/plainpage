@@ -163,36 +163,34 @@ function icon(paths: readonly string[]): SVGSVGElement {
   return svg
 }
 
-/* A code block's copy button: puts the block's text on the clipboard and
- * shows a check for a moment. It keeps focus on the pane (keyboard
- * scrolling lives there), and a double-click on it copies twice rather than
- * dropping into the editor. */
-function copyButton(text: () => string): HTMLButtonElement {
+/* A copy button — a code block's, or a copy section's: runs the copy and
+ * shows a check for a moment when it lands. It keeps focus on the pane
+ * (keyboard scrolling lives there), and a double-click on it copies twice
+ * rather than dropping into the editor. */
+function copyButton(label: string, copy: () => Promise<boolean>): HTMLButtonElement {
   const button = document.createElement('button')
   button.type = 'button'
   button.className = 'code-copy'
   button.title = 'Copy'
-  button.setAttribute('aria-label', 'Copy code')
+  button.setAttribute('aria-label', label)
   button.append(icon(COPY_ICON))
   let reset: number | undefined
   button.addEventListener('mousedown', (event) => event.preventDefault())
   button.addEventListener('dblclick', (event) => event.stopPropagation())
   button.addEventListener('click', (event) => {
     event.stopPropagation()
-    navigator.clipboard.writeText(text()).then(
-      () => {
-        button.classList.add('copied')
-        button.setAttribute('aria-label', 'Copied')
-        button.replaceChildren(icon(CHECK_ICON))
-        window.clearTimeout(reset)
-        reset = window.setTimeout(() => {
-          button.classList.remove('copied')
-          button.setAttribute('aria-label', 'Copy code')
-          button.replaceChildren(icon(COPY_ICON))
-        }, tokenMs('--dur-copied'))
-      },
-      (err: unknown) => console.error('code block copy failed', err)
-    )
+    void copy().then((copied) => {
+      if (!copied) return
+      button.classList.add('copied')
+      button.setAttribute('aria-label', 'Copied')
+      button.replaceChildren(icon(CHECK_ICON))
+      window.clearTimeout(reset)
+      reset = window.setTimeout(() => {
+        button.classList.remove('copied')
+        button.setAttribute('aria-label', label)
+        button.replaceChildren(icon(COPY_ICON))
+      }, tokenMs('--dur-copied'))
+    })
   })
   return button
 }
@@ -279,7 +277,10 @@ export class Preview {
 
   constructor(
     private readonly onEdit: (pos: number, screenTop?: number) => void,
-    private readonly applyEdit?: (from: number, to: number, insert: string) => string | null
+    private readonly applyEdit?: (from: number, to: number, insert: string) => string | null,
+    // Not readonly: the e2e suite swaps it for a stub so a run never
+    // writes the developer's clipboard.
+    private copyRich?: (markdown: string) => Promise<boolean>
   ) {
     this.el = document.createElement('div')
     this.el.className = 'preview'
@@ -391,6 +392,7 @@ export class Preview {
     }
     this.sizeTables()
     this.addCopyButtons()
+    this.addSectionButtons()
   }
 
   /* Every code block gets a copy button. It sits beside the <pre> in a
@@ -404,7 +406,38 @@ export class Preview {
       const block = document.createElement('div')
       block.className = 'code-block'
       pre.replaceWith(block)
-      block.append(pre, copyButton(() => code.textContent ?? ''))
+      block.append(
+        pre,
+        copyButton('Copy code', () =>
+          navigator.clipboard.writeText(code.textContent ?? '').then(
+            () => true,
+            (err: unknown) => {
+              console.error('code block copy failed', err)
+              return false
+            }
+          )
+        )
+      )
+    }
+  }
+
+  /* Every copy section (`<!-- copy -->` … `<!-- /copy -->`, markdown.ts)
+   * gets a button in its corner that copies the section with its
+   * formatting — the markdown between the markers, built by the copyRich
+   * hook into rich text, so bullets and bold paste as bullets and bold.
+   * Without the hook (the help pane) a section is just its text. */
+  private addSectionButtons(): void {
+    if (!this.copyRich) return
+    for (const section of this.el.querySelectorAll<HTMLElement>('.copy-section')) {
+      const from = Number(section.dataset['copyFrom'])
+      const to = Number(section.dataset['copyTo'])
+      if (!Number.isInteger(from) || !Number.isInteger(to) || from > to) continue
+      // The offsets belong to the source this render came from, so the
+      // slice comes from that same text.
+      const markdown = this.markdown
+      section.append(
+        copyButton('Copy section', () => this.copyRich?.(markdown.slice(from, to).trim()) ?? Promise.resolve(false))
+      )
     }
   }
 

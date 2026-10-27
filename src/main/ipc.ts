@@ -130,7 +130,10 @@ export function registerIpc(
   })
   ipcMain.handle(
     IPC.copyRichText,
-    (e, docId: number) => sessionFor(e.sender.id)?.tab(docId)?.copyRichText() ?? false
+    (e, docId: number, fragment?: unknown) =>
+      sessionFor(e.sender.id)
+        ?.tab(docId)
+        ?.copyRichText(typeof fragment === 'string' ? fragment : undefined) ?? false
   )
   ipcMain.handle(IPC.updateCheck, () => updates.checkNow())
   ipcMain.handle(IPC.loadCustomTheme, async () => {

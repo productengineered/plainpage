@@ -63,6 +63,12 @@ its corner, and long lines wrap so a whole prompt is in view.
   author. The label stays as narrow as its text, and in the finished page
   (`⌘E`) you click the empty cell and type, links still a click away;
   `Enter` or `Escape` finishes.
+- **Copy sections** — put `<!-- copy -->` on the line before some text
+  and `<!-- /copy -->` on the line after. In the finished page (`⌘E`) the
+  text sits in a light frame with a copy button in its corner; a click
+  copies just that text with its bullets, bold, and links intact, ready
+  to paste into a grading box, an email, or a doc. The markers are
+  comments, so other apps hide them.
 - **Images** — paste a screenshot, or drop a picture from Finder (File
   Explorer on Windows); it lands
   in an `assets/` folder next to your document with a relative link (a

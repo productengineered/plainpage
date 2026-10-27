@@ -461,10 +461,12 @@ export class TabSession {
   /* The document as the preview renders it, on the clipboard: HTML with
    * every style inlined for a paste into Docs, Word, or a CMS, and the
    * markdown itself as the plain-text flavor. Boolean rather than a
-   * dialog — a copy that failed is worth one toast, not a modal. */
-  async copyRichText(): Promise<boolean> {
+   * dialog — a copy that failed is worth one toast, not a modal. A
+   * fragment (a preview copy section) is copied in place of the whole
+   * document, built the same way. */
+  async copyRichText(fragment?: string): Promise<boolean> {
     try {
-      const content = await this.getRendererContent()
+      const content = fragment ?? (await this.getRendererContent())
       const rich = await buildRichText(content, this.path ? dirname(this.path) : null)
       clipboard.write({ text: rich.text, html: rich.html })
       return true

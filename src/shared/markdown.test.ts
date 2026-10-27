@@ -91,6 +91,45 @@ describe('renderMarkdown — THE pipeline', () => {
   })
 })
 
+describe('copy sections', () => {
+  const sections = (html: string, md: string): string[] =>
+    [...html.matchAll(/data-copy-from="(\d+)" data-copy-to="(\d+)"/g)].map((m) =>
+      md.slice(Number(m[1]), Number(m[2])).trim()
+    )
+
+  it('wraps the blocks between the markers and records their source', async () => {
+    const md = 'Before\n\n<!-- copy -->\nOne **bold**.\n\n- a\n  - b\n<!-- /copy -->\n\nAfter'
+    const html = await renderMarkdown(md, { sourcePositions: true })
+    expect(sections(html, md)).toEqual(['One **bold**.\n\n- a\n  - b'])
+    expect(html).toMatch(/<p data-pos="\d+">Before<\/p>\n<div class="copy-section"/)
+    expect(html).toMatch(/<\/ul><\/div>\n<p data-pos="\d+">After<\/p>/)
+    expect(html).not.toContain('copy --')
+  })
+
+  it('an unclosed section runs to the end of its container', async () => {
+    const md = '<!-- copy -->\nfirst\n\nsecond'
+    const html = await renderMarkdown(md, { sourcePositions: true })
+    expect(sections(html, md)).toEqual(['first\n\nsecond'])
+  })
+
+  it('markers do not nest: an inner opening marker is dropped', async () => {
+    const md = '<!-- copy -->\na\n<!-- copy -->\nb\n<!-- /copy -->\n\nc'
+    const html = await renderMarkdown(md, { sourcePositions: true })
+    expect(html.match(/copy-section/g)?.length).toBe(1)
+    expect(sections(html, md)).toEqual(['a\n<!-- copy -->\nb'])
+  })
+
+  it('a stray closing marker, or one inline in a paragraph, changes nothing', async () => {
+    const html = await renderMarkdown('<!-- /copy -->\n\ntext <!-- copy --> more')
+    expect(html).toBe('<p>text  more</p>')
+  })
+
+  it('exports get the wrapper without source offsets', async () => {
+    const html = await renderMarkdown('<!-- copy -->\nx\n<!-- /copy -->')
+    expect(html).toBe('<div class="copy-section"><p>x</p></div>')
+  })
+})
+
 /* Golden files (ULTRAPLAN §8): fixtures/*.md must render byte-identically
  * to their committed .golden.html. Regenerate deliberately with
  * UPDATE_GOLDENS=1 pnpm test — a diff here means export output changed and

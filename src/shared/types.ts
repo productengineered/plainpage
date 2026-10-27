@@ -242,9 +242,10 @@ export interface FoolscapApi {
   openRecent(path: string): void
   /* Pick and read a custom theme css file; null if cancelled. */
   loadCustomTheme(): Promise<string | null>
-  /* Put the rendered document on the clipboard as rich text; false when
-   * the copy could not be built. */
-  copyRichText(docId: number): Promise<boolean>
+  /* Put the rendered document — or just `fragment`, a piece of its
+   * markdown — on the clipboard as rich text; false when the copy could
+   * not be built. */
+  copyRichText(docId: number, fragment?: string): Promise<boolean>
   /* Tab intents — the renderer's bar clicks and drags. */
   tabActivate(docId: number): void
   tabClose(docId: number): void
