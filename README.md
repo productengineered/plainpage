@@ -119,8 +119,9 @@ Details:
 - A section without its closing marker runs to the end of the document,
   or to the end of the quote or list item it starts in.
 - In the editor the markers show as plain text; the frame and button are
-  in preview only, and exports (HTML, PDF, Copy as Rich Text) leave both
-  out.
+  in preview only. HTML and PDF exports leave both out, and so does the
+  formatted half of a whole-document Copy as Rich Text; its plain-text
+  half is the document's markdown as written, markers included.
 
 ## Opening files by link
 

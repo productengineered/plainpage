@@ -51,4 +51,23 @@ export async function run() {
   } finally {
     await app.close()
   }
+
+  // An answer typed into a response row inside a section is in the copy,
+  // even while the answer is still open.
+  const answered = await launch({ files: { 'doc.md': ['<!-- copy -->', 'Note.', '', '| BD RESPONSE: | |', '| ------------ | --- |', '<!-- /copy -->', ''].join('\n') } })
+  try {
+    await sleep(800)
+    await answered.evaluate(`(window.__copied = [], $.preview.copyRich = async (md) => { window.__copied.push(md); return true }, true)`)
+    const cell = await answered.evaluate(`(() => { const r = document.querySelector('.preview .fs-response-answer').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 } })()`)
+    await answered.click(cell.x, cell.y)
+    await answered.until(`!!document.querySelector('.preview .fs-editing-cell')`, { label: 'answer editing' })
+    await answered.type('Agreed')
+    await answered.until(`$.view.state.doc.toString().includes('Agreed')`, { label: 'answer in the source' })
+    const button = await answered.evaluate(`(() => { const r = document.querySelector('.preview .copy-section > button.code-copy').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 } })()`)
+    await answered.click(button.x, button.y)
+    await answered.until(`window.__copied.length === 1`, { label: 'section copied' })
+    expect(await answered.evaluate(`window.__copied[0].includes('| BD RESPONSE: | Agreed |')`), 'the copy carries the answer just typed').toBe(true)
+  } finally {
+    await answered.close()
+  }
 }

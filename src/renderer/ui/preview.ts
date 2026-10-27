@@ -195,6 +195,13 @@ function copyButton(label: string, copy: () => Promise<boolean>): HTMLButtonElem
   return button
 }
 
+/* A copy section's source range, from the offsets the pipeline stamps. */
+function sectionOffsets(section: HTMLElement): { from: number; to: number } | null {
+  const from = Number(section.dataset['copyFrom'])
+  const to = Number(section.dataset['copyTo'])
+  return Number.isInteger(from) && Number.isInteger(to) && from <= to ? { from, to } : null
+}
+
 /* Index of the span covering (or nearest to) a target line. Ties go to the
  * later span: document order puts children after their parents, so nested
  * elements resolve to the most specific one under the line. */
@@ -428,17 +435,31 @@ export class Preview {
    * Without the hook (the help pane) a section is just its text. */
   private addSectionButtons(): void {
     if (!this.copyRich) return
-    for (const section of this.el.querySelectorAll<HTMLElement>('.copy-section')) {
-      const from = Number(section.dataset['copyFrom'])
-      const to = Number(section.dataset['copyTo'])
-      if (!Number.isInteger(from) || !Number.isInteger(to) || from > to) continue
-      // The offsets belong to the source this render came from, so the
-      // slice comes from that same text.
-      const markdown = this.markdown
+    const rendered = this.markdown
+    this.el.querySelectorAll<HTMLElement>('.copy-section').forEach((section, index) => {
+      const offsets = sectionOffsets(section)
+      if (!offsets) return
       section.append(
-        copyButton('Copy section', () => this.copyRich?.(markdown.slice(from, to).trim()) ?? Promise.resolve(false))
+        copyButton('Copy section', async () => {
+          // An answer typed in preview since this render has moved the
+          // text under these offsets; find the section afresh in the
+          // current source, through the same pipeline.
+          const source = this.markdown
+          const at = source === rendered ? offsets : await this.currentSectionOffsets(source, index)
+          if (!at || !this.copyRich) return false
+          return this.copyRich(source.slice(at.from, at.to).trim())
+        })
       )
-    }
+    })
+  }
+
+  private async currentSectionOffsets(source: string, index: number): Promise<{ from: number; to: number } | null> {
+    const template = document.createElement('template')
+    // Our own pipeline's output (it escapes raw HTML); template content is
+    // inert, never rendered.
+    template.innerHTML = await renderMarkdown(source, { sourcePositions: true })
+    const section = template.content.querySelectorAll<HTMLElement>('.copy-section')[index]
+    return section ? sectionOffsets(section) : null
   }
 
   /* Scroll the rendered pane to the element covering a source position —
