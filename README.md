@@ -21,6 +21,7 @@ what you wrote.
 
 - Files open where you left them; ⇧⌘T reopens a closed tab; drop an image from Finder or File Explorer or paste a URL over a selection and the markdown writes itself
 - Live preview of every markdown construct: headings (Fraunces, real optical sizing), emphasis, lists with hanging indents and real bullets, links (⌘-click, or Ctrl-click on Windows, to open), Shiki-highlighted code fences, inline images, blockquotes, rules, clickable task-list checkboxes, and tables that render as a real grid and edit in place (click a cell and type; ⌥-click for the pipe source with its normalizing formatter, drag-to-resize columns, and hover column controls)
+- Copy sections: wrap text in `<!-- copy -->` … `<!-- /copy -->` and the preview gives it a one-click copy button that keeps bullets and bold ([how](#copy-sections))
 - Atomic saves — temp file, fsync, rename; a crash can never truncate your manuscript
 - Autosave with a browsable version history (File ▸ Browse Versions…), restores that ⌘Z undoes, and an undo stack that survives relaunch
 - External-change watching: clean buffers reload silently, dirty buffers get a choice
@@ -77,6 +78,50 @@ On another distribution, use the `.AppImage` instead: make it executable
 
 Plainpage doesn't update itself; download a new version from Releases when
 one comes out. Your documents and settings carry over.
+
+## Copy sections
+
+Some documents have a part you'll paste somewhere else: feedback for a
+grading system, a reply to an email, a summary for a doc. Mark that part
+with an HTML comment on the line before it and another on the line after:
+
+```markdown
+## Feedback to share
+
+<!-- copy -->
+I enjoyed reading through this.
+
+**What stood out**
+
+- Your highlights put a count next to each interview number.
+  - That makes it easy to see which points rest on one person.
+<!-- /copy -->
+```
+
+In preview (⌘E, or Ctrl+E on Windows and Linux), the marked text sits in a
+light frame with a copy button in its top-right corner. One click copies
+just that text, and the button shows a check when the copy lands:
+
+- Apps that take formatted text (Google Docs, Word, email, a learning
+  management system's rich-text box) get real bullets, nested bullets,
+  bold, italics, links, and tables.
+- Apps that take only plain text get the markdown itself (`- ` bullets,
+  `**bold**`).
+
+Details:
+
+- The markers are HTML comments, so GitHub and other markdown apps hide
+  them, and the file stays ordinary markdown. `<!--copy-->` without spaces
+  works too.
+- Each marker goes on a line of its own. A marker in the middle of a
+  paragraph is ignored.
+- A document can have as many sections as you like, but they don't nest.
+- A section without its closing marker runs to the end of the document,
+  or to the end of the quote or list item it starts in.
+- In the editor the markers show as plain text; the frame and button are
+  in preview only. HTML and PDF exports leave both out, and so does the
+  formatted half of a whole-document Copy as Rich Text; its plain-text
+  half is the document's markdown as written, markers included.
 
 ## Opening files by link
 

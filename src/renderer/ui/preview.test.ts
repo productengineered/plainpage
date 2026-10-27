@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bestCoveringIndex, nearestSpanIndex, sourceOffsetAt, sourceOffsetNear } from './preview'
+import { bestCoveringIndex, dedent, nearestSpanIndex, sourceOffsetAt, sourceOffsetNear } from './preview'
 
 describe('bestCoveringIndex', () => {
   it('picks the largest stamp at or below the target', () => {
@@ -143,5 +143,16 @@ describe('sourceOffsetNear', () => {
 
   it('returns null when the line holds no word at all', () => {
     expect(sourceOffsetNear('— —', 0, '— —', 1)).toBeNull()
+  })
+})
+
+describe('dedent — a copy section out of its list item', () => {
+  it('removes the item indent and keeps deeper indentation', () => {
+    expect(dedent('    Text\n\n    - a\n      - b\n\n            code', 4)).toBe('Text\n\n- a\n  - b\n\n        code')
+  })
+
+  it('never removes more than the indent, and nothing at zero', () => {
+    expect(dedent('  two\n      six', 4)).toBe('two\n  six')
+    expect(dedent('    code', 0)).toBe('    code')
   })
 })

@@ -185,6 +185,14 @@ const preview = new Preview(
       userEvent: 'input'
     })
     return editor.view.state.doc.toString()
+  },
+  // A copy section's button: main builds the rich text, as for the whole
+  // document; a failure gets the same toast.
+  async (markdown) => {
+    if (displayedId === null) return false
+    const copied = await window.foolscap.copyRichText(displayedId, markdown)
+    if (!copied) showToast('That copy could not be built.')
+    return copied
   }
 )
 

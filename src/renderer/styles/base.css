@@ -659,6 +659,26 @@ body {
   height: 55%;
 }
 
+/* A copy section (`<!-- copy -->` … `<!-- /copy -->`): a hairline frame
+ * that shows what the corner button copies, with its right padding
+ * reserving the button's column the way a code block's does. */
+.preview-doc .copy-section {
+  position: relative;
+  margin: var(--space-paragraph) 0;
+  padding: 0 calc(var(--code-copy-size) + 2 * var(--code-copy-inset)) 0 1em;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-ui);
+}
+
+.preview-doc .copy-section > :first-child {
+  margin-top: var(--space-paragraph);
+}
+
+.preview-doc .copy-section > :last-child,
+.preview-doc .copy-section > :nth-last-child(2) {
+  margin-bottom: var(--space-paragraph);
+}
+
 .preview-doc blockquote {
   margin: var(--space-paragraph) 0;
   padding: 0.4em 1em;

@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url'
 import { columnDisplayWidth, parseTable, tableSourceAt } from '../../renderer/editor/table-model'
 import ledgerCss from '../../renderer/styles/themes/ledger.css?raw'
 import tokensCss from '../../renderer/styles/tokens.css?raw'
-import { renderMarkdown } from '../../shared/markdown'
+import { referenceDefinitions, renderMarkdown } from '../../shared/markdown'
 
 /* Copy as Rich Text: the document as the preview renders it, on the
  * clipboard, ready to paste into Google Docs, Word, or a CMS with its
@@ -242,7 +242,7 @@ export function insertColgroups(html: string, markdown: string): string {
 /* Position stamps exist for the colgroups above; nothing downstream wants
  * them, and a paste should carry no machinery. */
 export function stripPositions(html: string): string {
-  return html.replace(/ data-pos="\d+"/g, '')
+  return html.replace(/ data-(?:pos|copy-from|copy-to)="\d+"/g, '')
 }
 
 /* A disabled checkbox is inert markup that most destinations drop
@@ -328,4 +328,22 @@ export async function buildRichText(
    * thing worth having — and nothing that fixes a size. */
   const font = cleanDeclarations(resolveVars('font-family: var(--font-body)', tokens))
   return { html: `<div style="${font}">\n${withImages}\n</div>`, text: markdown }
+}
+
+/* One copy section of a document: rendered with the document's link and
+ * footnote definitions in scope, so a reference defined outside the
+ * section still pastes as a link; the plain flavor is the section alone.
+ * Link definitions go first, in document order, because the first
+ * definition of a label wins; footnotes go after, where an indented
+ * opening line can't be read as their continuation. */
+export async function buildSectionRichText(
+  section: string,
+  document: string,
+  docDir: string | null,
+  tokens: Map<string, string> = TOKENS
+): Promise<RichText> {
+  const { links, footnotes } = referenceDefinitions(document)
+  const source = [links, section, footnotes].filter((part) => part !== '').join('\n\n')
+  const { html } = await buildRichText(source, docDir, tokens)
+  return { html, text: section }
 }

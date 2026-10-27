@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
   buildRichText,
+  buildSectionRichText,
   checkboxesToGlyphs,
   cleanDeclarations,
   embedImages,
@@ -172,6 +173,50 @@ describe('the passes over finished HTML, on their own', () => {
   it('insertColgroups: no source table, no colgroup', () => {
     const html = '<table data-pos="9999"><tr><td>x</td></tr></table>'
     expect(insertColgroups(html, 'no table here')).toBe(html)
+  })
+
+  it('a copy section copies as its own rich fragment, markdown as the text flavor', async () => {
+    const section = 'Note **bold**.\n\n- one\n  - two'
+    const { html, text } = await buildRichText(section, null, PALETTE)
+    expect(text).toBe(section)
+    expect(html).toContain('<strong>bold</strong>')
+    expect(html).toMatch(/<ul[^>]*>\s*<li[^>]*>one\s*<ul/)
+  })
+
+  it('a whole document copies its sections without their machinery', async () => {
+    const { html } = await buildRichText('<!-- copy -->\nx\n<!-- /copy -->', null, PALETTE)
+    expect(html).not.toContain('copy-section')
+    expect(html).not.toContain('data-copy')
+    expect(html).not.toContain('<!--')
+  })
+
+  it('a section keeps links whose definitions live elsewhere in the document', async () => {
+    const section = 'Read [the guide][ref].'
+    const doc = `<!-- copy -->\n${section}\n<!-- /copy -->\n\n[ref]: https://example.com/guide`
+    const { html, text } = await buildSectionRichText(section, doc, null, PALETTE)
+    expect(html).toContain('href="https://example.com/guide"')
+    expect(html).not.toContain('[ref]')
+    expect(text).toBe(section)
+  })
+
+  it("the document's first definition of a label wins, as in preview", async () => {
+    const section = '[link][ref]\n\n[ref]: https://second.example'
+    const doc = `[ref]: https://first.example\n\n<!-- copy -->\n${section}\n<!-- /copy -->`
+    const { html } = await buildSectionRichText(section, doc, null, PALETTE)
+    expect(html).toContain('href="https://first.example"')
+  })
+
+  it('a section that opens with an indented code block stays code', async () => {
+    const section = '    alpha\n    beta'
+    const { html } = await buildSectionRichText(section, section, null, PALETTE)
+    expect(html).toContain('<pre')
+    expect(html).toContain('alpha')
+  })
+
+  it('stripPositions drops copy-section offsets too', () => {
+    expect(stripPositions('<div class="copy-section" data-copy-from="4" data-copy-to="9" data-pos="0">')).toBe(
+      '<div class="copy-section">'
+    )
   })
 
   it('stripPositions leaves other data attributes alone', () => {

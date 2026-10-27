@@ -163,38 +163,60 @@ function icon(paths: readonly string[]): SVGSVGElement {
   return svg
 }
 
-/* A code block's copy button: puts the block's text on the clipboard and
- * shows a check for a moment. It keeps focus on the pane (keyboard
- * scrolling lives there), and a double-click on it copies twice rather than
- * dropping into the editor. */
-function copyButton(text: () => string): HTMLButtonElement {
+/* A copy button — a code block's, or a copy section's: runs the copy and
+ * shows a check for a moment when it lands. It keeps focus on the pane
+ * (keyboard scrolling lives there), and a double-click on it copies twice
+ * rather than dropping into the editor. */
+function copyButton(label: string, copy: () => Promise<boolean>): HTMLButtonElement {
   const button = document.createElement('button')
   button.type = 'button'
   button.className = 'code-copy'
   button.title = 'Copy'
-  button.setAttribute('aria-label', 'Copy code')
+  button.setAttribute('aria-label', label)
   button.append(icon(COPY_ICON))
   let reset: number | undefined
   button.addEventListener('mousedown', (event) => event.preventDefault())
   button.addEventListener('dblclick', (event) => event.stopPropagation())
   button.addEventListener('click', (event) => {
     event.stopPropagation()
-    navigator.clipboard.writeText(text()).then(
-      () => {
-        button.classList.add('copied')
-        button.setAttribute('aria-label', 'Copied')
-        button.replaceChildren(icon(CHECK_ICON))
-        window.clearTimeout(reset)
-        reset = window.setTimeout(() => {
-          button.classList.remove('copied')
-          button.setAttribute('aria-label', 'Copy code')
-          button.replaceChildren(icon(COPY_ICON))
-        }, tokenMs('--dur-copied'))
-      },
-      (err: unknown) => console.error('code block copy failed', err)
-    )
+    void copy().then((copied) => {
+      if (!copied) return
+      button.classList.add('copied')
+      button.setAttribute('aria-label', 'Copied')
+      button.replaceChildren(icon(CHECK_ICON))
+      window.clearTimeout(reset)
+      reset = window.setTimeout(() => {
+        button.classList.remove('copied')
+        button.setAttribute('aria-label', label)
+        button.replaceChildren(icon(COPY_ICON))
+      }, tokenMs('--dur-copied'))
+    })
   })
   return button
+}
+
+interface SectionRange {
+  from: number
+  to: number
+  /* The enclosing list item's indent, which every line carries. */
+  indent: number
+}
+
+/* A copy section's source range, from the offsets the pipeline stamps. */
+function sectionOffsets(section: HTMLElement): SectionRange | null {
+  const from = Number(section.dataset['copyFrom'])
+  const to = Number(section.dataset['copyTo'])
+  const indent = Number(section.dataset['copyIndent'] ?? 0)
+  return Number.isInteger(from) && Number.isInteger(to) && from <= to
+    ? { from, to, indent: Number.isInteger(indent) && indent > 0 ? indent : 0 }
+    : null
+}
+
+/* Up to `indent` leading spaces off each line — a container's indent,
+ * never more, so code-block indentation inside the section survives. */
+export function dedent(text: string, indent: number): string {
+  if (indent <= 0) return text
+  return text.replace(new RegExp(`^ {1,${indent}}`, 'gm'), '')
 }
 
 /* Index of the span covering (or nearest to) a target line. Ties go to the
@@ -279,7 +301,10 @@ export class Preview {
 
   constructor(
     private readonly onEdit: (pos: number, screenTop?: number) => void,
-    private readonly applyEdit?: (from: number, to: number, insert: string) => string | null
+    private readonly applyEdit?: (from: number, to: number, insert: string) => string | null,
+    // Not readonly: the e2e suite swaps it for a stub so a run never
+    // writes the developer's clipboard.
+    private copyRich?: (markdown: string) => Promise<boolean>
   ) {
     this.el = document.createElement('div')
     this.el.className = 'preview'
@@ -391,6 +416,7 @@ export class Preview {
     }
     this.sizeTables()
     this.addCopyButtons()
+    this.addSectionButtons()
   }
 
   /* Every code block gets a copy button. It sits beside the <pre> in a
@@ -404,8 +430,62 @@ export class Preview {
       const block = document.createElement('div')
       block.className = 'code-block'
       pre.replaceWith(block)
-      block.append(pre, copyButton(() => code.textContent ?? ''))
+      block.append(
+        pre,
+        copyButton('Copy code', () =>
+          navigator.clipboard.writeText(code.textContent ?? '').then(
+            () => true,
+            (err: unknown) => {
+              console.error('code block copy failed', err)
+              return false
+            }
+          )
+        )
+      )
     }
+  }
+
+  /* Every copy section (`<!-- copy -->` … `<!-- /copy -->`, markdown.ts)
+   * gets a button in its corner that copies the section with its
+   * formatting — the markdown between the markers, built by the copyRich
+   * hook into rich text, so bullets and bold paste as bullets and bold.
+   * Without the hook (the help pane) a section is just its text. */
+  private addSectionButtons(): void {
+    if (!this.copyRich) return
+    const rendered = this.markdown
+    this.el.querySelectorAll<HTMLElement>('.copy-section').forEach((section, index) => {
+      const offsets = sectionOffsets(section)
+      if (!offsets) return
+      section.append(
+        copyButton('Copy section', async () => {
+          // An answer typed in preview since this render has moved the
+          // text under these offsets; find the section afresh in the
+          // current source, through the same pipeline.
+          const source = this.markdown
+          const at = source === rendered ? offsets : await this.currentSectionOffsets(source, index)
+          if (!at || !this.copyRich) return false
+          // Drop the blank lines around the section, never a content
+          // line's indentation — four spaces can be an indented code block.
+          const section = dedent(
+            source
+              .slice(at.from, at.to)
+              .replace(/^(?:[ \t]*\r?\n)+/, '')
+              .replace(/(?:\r?\n[ \t]*)+$/, ''),
+            at.indent
+          )
+          return this.copyRich(section)
+        })
+      )
+    })
+  }
+
+  private async currentSectionOffsets(source: string, index: number): Promise<SectionRange | null> {
+    const template = document.createElement('template')
+    // Our own pipeline's output (it escapes raw HTML); template content is
+    // inert, never rendered.
+    template.innerHTML = await renderMarkdown(source, { sourcePositions: true })
+    const section = template.content.querySelectorAll<HTMLElement>('.copy-section')[index]
+    return section ? sectionOffsets(section) : null
   }
 
   /* Scroll the rendered pane to the element covering a source position —

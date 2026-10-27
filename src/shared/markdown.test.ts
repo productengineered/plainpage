@@ -1,7 +1,7 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { renderMarkdown } from './markdown'
+import { referenceDefinitions, renderMarkdown } from './markdown'
 
 describe('renderMarkdown — THE pipeline', () => {
   it('renders headings, gfm strikethrough, and tables', async () => {
@@ -88,6 +88,71 @@ describe('renderMarkdown — THE pipeline', () => {
   it('default rendering carries no position stamps (exports stay clean)', async () => {
     const html = await renderMarkdown('# One\n\ntext here')
     expect(html).not.toContain('data-pos')
+  })
+})
+
+describe('referenceDefinitions', () => {
+  it('collects link and footnote definitions as written, nowhere else', () => {
+    const md = 'See [guide][ref] and a note[^n].\n\n[ref]: https://example.com "Guide"\n\n> [q]: https://q.example\n\n[^n]: The note.\n\nPlain text.'
+    expect(referenceDefinitions(md)).toEqual({
+      links: '[ref]: https://example.com "Guide"\n\n[q]: https://q.example',
+      footnotes: '[^n]: The note.'
+    })
+  })
+
+  it('is empty without definitions', () => {
+    expect(referenceDefinitions('# Just text\n\n- a list')).toEqual({ links: '', footnotes: '' })
+  })
+})
+
+describe('copy sections', () => {
+  const sections = (html: string, md: string): string[] =>
+    [...html.matchAll(/data-copy-from="(\d+)" data-copy-to="(\d+)"/g)].map((m) =>
+      md.slice(Number(m[1]), Number(m[2])).trim()
+    )
+
+  it('wraps the blocks between the markers and records their source', async () => {
+    const md = 'Before\n\n<!-- copy -->\nOne **bold**.\n\n- a\n  - b\n<!-- /copy -->\n\nAfter'
+    const html = await renderMarkdown(md, { sourcePositions: true })
+    expect(sections(html, md)).toEqual(['One **bold**.\n\n- a\n  - b'])
+    expect(html).toMatch(/<p data-pos="\d+">Before<\/p>\n<div class="copy-section"/)
+    expect(html).toMatch(/<\/ul><\/div>\n<p data-pos="\d+">After<\/p>/)
+    expect(html).not.toContain('copy --')
+  })
+
+  it('an unclosed section runs to the end of its container', async () => {
+    const md = '<!-- copy -->\nfirst\n\nsecond'
+    const html = await renderMarkdown(md, { sourcePositions: true })
+    expect(sections(html, md)).toEqual(['first\n\nsecond'])
+  })
+
+  it('markers do not nest: an inner opening marker is dropped', async () => {
+    const md = '<!-- copy -->\na\n<!-- copy -->\nb\n<!-- /copy -->\n\nc'
+    const html = await renderMarkdown(md, { sourcePositions: true })
+    expect(html.match(/copy-section/g)?.length).toBe(1)
+    expect(sections(html, md)).toEqual(['a\n<!-- copy -->\nb'])
+  })
+
+  it('a stray closing marker, or one inline in a paragraph, changes nothing', async () => {
+    const html = await renderMarkdown('<!-- /copy -->\n\ntext <!-- copy --> more')
+    expect(html).toBe('<p>text  more</p>')
+  })
+
+  it('a section inside a list item records the item indent', async () => {
+    const md = '- item\n  - nested\n\n    <!-- copy -->\n    Inside **the** item.\n    <!-- /copy -->'
+    const html = await renderMarkdown(md, { sourcePositions: true })
+    expect(html).toContain('data-copy-indent="4"')
+    expect(sections(html, md)).toEqual(['Inside **the** item.'])
+  })
+
+  it('a marker spread over several lines is only a comment', async () => {
+    const html = await renderMarkdown('<!--\ncopy\n-->\nx')
+    expect(html).toBe('<p>x</p>')
+  })
+
+  it('exports get the wrapper without source offsets', async () => {
+    const html = await renderMarkdown('<!-- copy -->\nx\n<!-- /copy -->')
+    expect(html).toBe('<div class="copy-section"><p>x</p></div>')
   })
 })
 
