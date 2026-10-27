@@ -145,6 +145,11 @@ describe('copy sections', () => {
     expect(sections(html, md)).toEqual(['Inside **the** item.'])
   })
 
+  it('a marker spread over several lines is only a comment', async () => {
+    const html = await renderMarkdown('<!--\ncopy\n-->\nx')
+    expect(html).toBe('<p>x</p>')
+  })
+
   it('exports get the wrapper without source offsets', async () => {
     const html = await renderMarkdown('<!-- copy -->\nx\n<!-- /copy -->')
     expect(html).toBe('<div class="copy-section"><p>x</p></div>')

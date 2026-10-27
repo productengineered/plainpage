@@ -139,8 +139,9 @@ function remarkBrTags() {
   }
 }
 
-const COPY_OPEN = /^<!--\s*copy\s*-->$/i
-const COPY_CLOSE = /^<!--\s*\/copy\s*-->$/i
+// One line each: a comment spread over several lines is just a comment.
+const COPY_OPEN = /^<!--[ \t]*copy[ \t]*-->$/i
+const COPY_CLOSE = /^<!--[ \t]*\/copy[ \t]*-->$/i
 
 /* Containers whose children are blocks — the only places a marker can
  * stand on its own line. Inside a paragraph it is inline html, left out. */
