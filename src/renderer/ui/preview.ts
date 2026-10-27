@@ -195,11 +195,28 @@ function copyButton(label: string, copy: () => Promise<boolean>): HTMLButtonElem
   return button
 }
 
+interface SectionRange {
+  from: number
+  to: number
+  /* The enclosing list item's indent, which every line carries. */
+  indent: number
+}
+
 /* A copy section's source range, from the offsets the pipeline stamps. */
-function sectionOffsets(section: HTMLElement): { from: number; to: number } | null {
+function sectionOffsets(section: HTMLElement): SectionRange | null {
   const from = Number(section.dataset['copyFrom'])
   const to = Number(section.dataset['copyTo'])
-  return Number.isInteger(from) && Number.isInteger(to) && from <= to ? { from, to } : null
+  const indent = Number(section.dataset['copyIndent'] ?? 0)
+  return Number.isInteger(from) && Number.isInteger(to) && from <= to
+    ? { from, to, indent: Number.isInteger(indent) && indent > 0 ? indent : 0 }
+    : null
+}
+
+/* Up to `indent` leading spaces off each line — a container's indent,
+ * never more, so code-block indentation inside the section survives. */
+export function dedent(text: string, indent: number): string {
+  if (indent <= 0) return text
+  return text.replace(new RegExp(`^ {1,${indent}}`, 'gm'), '')
 }
 
 /* Index of the span covering (or nearest to) a target line. Ties go to the
@@ -449,17 +466,20 @@ export class Preview {
           if (!at || !this.copyRich) return false
           // Drop the blank lines around the section, never a content
           // line's indentation — four spaces can be an indented code block.
-          const section = source
-            .slice(at.from, at.to)
-            .replace(/^(?:[ \t]*\r?\n)+/, '')
-            .replace(/(?:\r?\n[ \t]*)+$/, '')
+          const section = dedent(
+            source
+              .slice(at.from, at.to)
+              .replace(/^(?:[ \t]*\r?\n)+/, '')
+              .replace(/(?:\r?\n[ \t]*)+$/, ''),
+            at.indent
+          )
           return this.copyRich(section)
         })
       )
     })
   }
 
-  private async currentSectionOffsets(source: string, index: number): Promise<{ from: number; to: number } | null> {
+  private async currentSectionOffsets(source: string, index: number): Promise<SectionRange | null> {
     const template = document.createElement('template')
     // Our own pipeline's output (it escapes raw HTML); template content is
     // inert, never rendered.

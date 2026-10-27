@@ -112,7 +112,7 @@ interface MdastNode {
   type: string
   value?: string
   children?: MdastNode[]
-  position?: { start: { offset?: number }; end: { offset?: number } }
+  position?: { start: { offset?: number; column?: number }; end: { offset?: number } }
   data?: { hName?: string; hProperties?: Record<string, unknown> }
 }
 
@@ -176,6 +176,12 @@ function remarkCopySections({ positions }: { positions: boolean }) {
           if (positions && from !== undefined && to !== undefined) {
             props['dataCopyFrom'] = String(from)
             props['dataCopyTo'] = String(to)
+            // Inside a list item every line carries the item's indent,
+            // which alone would read as an indented code block.
+            const column = inner[0]?.position?.start.column
+            if (node.type === 'listItem' && column !== undefined && column > 1) {
+              props['dataCopyIndent'] = String(column - 1)
+            }
           }
           out.push({
             type: 'copySection',
@@ -240,25 +246,28 @@ function getProcessor(sourcePositions: boolean): ReturnType<typeof buildProcesso
   return cached
 }
 
-/* The document's link reference and footnote definitions, as written,
- * one per paragraph. A copy section renders on its own, and a
- * `[text][ref]` or `[^1]` whose definition lives elsewhere in the
- * document would lose its target; appending these keeps them in scope.
+/* The document's link reference and footnote definitions, as written, in
+ * document order, one per paragraph. A copy section renders on its own,
+ * and a `[text][ref]` or `[^1]` whose definition lives elsewhere in the
+ * document would lose its target; adding these keeps them in scope.
  * Parse only — the same remark front end as the pipeline. */
-export function referenceDefinitions(markdown: string): string {
+export function referenceDefinitions(markdown: string): { links: string; footnotes: string } {
   const tree = unified().use(remarkParse).use(remarkGfm).parse(markdown) as MdastNode
-  const found: string[] = []
+  const links: string[] = []
+  const footnotes: string[] = []
   const walk = (node: MdastNode): void => {
     if (node.type === 'definition' || node.type === 'footnoteDefinition') {
       const from = node.position?.start.offset
       const to = node.position?.end.offset
-      if (from !== undefined && to !== undefined) found.push(markdown.slice(from, to))
+      if (from !== undefined && to !== undefined) {
+        ;(node.type === 'definition' ? links : footnotes).push(markdown.slice(from, to))
+      }
       return
     }
     for (const child of node.children ?? []) walk(child)
   }
   walk(tree)
-  return found.join('\n\n')
+  return { links: links.join('\n\n'), footnotes: footnotes.join('\n\n') }
 }
 
 export interface RenderOptions {

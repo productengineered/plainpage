@@ -199,6 +199,13 @@ describe('the passes over finished HTML, on their own', () => {
     expect(text).toBe(section)
   })
 
+  it("the document's first definition of a label wins, as in preview", async () => {
+    const section = '[link][ref]\n\n[ref]: https://second.example'
+    const doc = `[ref]: https://first.example\n\n<!-- copy -->\n${section}\n<!-- /copy -->`
+    const { html } = await buildSectionRichText(section, doc, null, PALETTE)
+    expect(html).toContain('href="https://first.example"')
+  })
+
   it('a section that opens with an indented code block stays code', async () => {
     const section = '    alpha\n    beta'
     const { html } = await buildSectionRichText(section, section, null, PALETTE)

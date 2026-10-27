@@ -94,11 +94,14 @@ describe('renderMarkdown — THE pipeline', () => {
 describe('referenceDefinitions', () => {
   it('collects link and footnote definitions as written, nowhere else', () => {
     const md = 'See [guide][ref] and a note[^n].\n\n[ref]: https://example.com "Guide"\n\n> [q]: https://q.example\n\n[^n]: The note.\n\nPlain text.'
-    expect(referenceDefinitions(md)).toBe('[ref]: https://example.com "Guide"\n\n[q]: https://q.example\n\n[^n]: The note.')
+    expect(referenceDefinitions(md)).toEqual({
+      links: '[ref]: https://example.com "Guide"\n\n[q]: https://q.example',
+      footnotes: '[^n]: The note.'
+    })
   })
 
   it('is empty without definitions', () => {
-    expect(referenceDefinitions('# Just text\n\n- a list')).toBe('')
+    expect(referenceDefinitions('# Just text\n\n- a list')).toEqual({ links: '', footnotes: '' })
   })
 })
 
@@ -133,6 +136,13 @@ describe('copy sections', () => {
   it('a stray closing marker, or one inline in a paragraph, changes nothing', async () => {
     const html = await renderMarkdown('<!-- /copy -->\n\ntext <!-- copy --> more')
     expect(html).toBe('<p>text  more</p>')
+  })
+
+  it('a section inside a list item records the item indent', async () => {
+    const md = '- item\n  - nested\n\n    <!-- copy -->\n    Inside **the** item.\n    <!-- /copy -->'
+    const html = await renderMarkdown(md, { sourcePositions: true })
+    expect(html).toContain('data-copy-indent="4"')
+    expect(sections(html, md)).toEqual(['Inside **the** item.'])
   })
 
   it('exports get the wrapper without source offsets', async () => {

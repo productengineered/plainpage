@@ -332,15 +332,18 @@ export async function buildRichText(
 
 /* One copy section of a document: rendered with the document's link and
  * footnote definitions in scope, so a reference defined outside the
- * section still pastes as a link; the plain flavor is the section alone. */
+ * section still pastes as a link; the plain flavor is the section alone.
+ * Link definitions go first, in document order, because the first
+ * definition of a label wins; footnotes go after, where an indented
+ * opening line can't be read as their continuation. */
 export async function buildSectionRichText(
   section: string,
   document: string,
   docDir: string | null,
   tokens: Map<string, string> = TOKENS
 ): Promise<RichText> {
-  const definitions = referenceDefinitions(document)
-  const source = definitions ? `${section}\n\n${definitions}` : section
+  const { links, footnotes } = referenceDefinitions(document)
+  const source = [links, section, footnotes].filter((part) => part !== '').join('\n\n')
   const { html } = await buildRichText(source, docDir, tokens)
   return { html, text: section }
 }
