@@ -129,12 +129,15 @@ export class PreviewFind {
   /* Show the bar and select its text; a seed (the selection, or the
    * editor's query) replaces the text first. A second ⌘F just refocuses. */
   show(seed?: string): void {
-    if (seed !== undefined && seed !== '' && seed !== this.input.value) this.input.value = seed
+    const seeded = seed !== undefined && seed !== '' && seed !== this.input.value
+    if (seeded) this.input.value = seed
+    const wasOpen = this.open
     this.dom.hidden = false
     this.open = true
     this.input.focus()
     this.input.select()
-    this.search()
+    // Refocusing an open bar keeps the place in its matches.
+    if (!wasOpen || seeded) this.search()
   }
 
   close(): void {

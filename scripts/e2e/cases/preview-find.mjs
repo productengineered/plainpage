@@ -42,6 +42,9 @@ export async function run() {
     await app.until(`${count} === '2 of 3'`, { label: 'Shift+Enter steps back' })
     await app.key('g', ['meta'])
     await app.until(`${count} === '3 of 3'`, { label: '⌘G steps forward' })
+    await app.cmd('f')
+    await sleep(200)
+    expect(await app.evaluate(count), 'a second ⌘F keeps the place').toBe('3 of 3')
 
     await app.key('Escape')
     await app.until(`document.querySelector('.preview .preview-find').hidden`, { label: 'Escape closes the bar' })
@@ -55,6 +58,16 @@ export async function run() {
     await app.cmd('f')
     await app.until(`!!document.querySelector('.cm-panels .find-input')`, { label: 'editor find opens' })
     expect(await app.evaluate(`document.querySelector('.cm-panels .find-input').value`), 'same query in the editor').toBe('apple')
+
+    // A newer editor query comes back to preview.
+    await app.evaluate(`(() => { const i = document.querySelector('.cm-panels .find-input'); i.value = 'Filler'; i.dispatchEvent(new Event('input')); return true })()`)
+    await app.key('Escape')
+    await sleep(200)
+    await app.cmd('e')
+    await app.until(`!document.querySelector('.preview').hidden`, { label: 'back in preview' })
+    await sleep(300)
+    await app.cmd('f')
+    await app.until(`document.querySelector('.preview .preview-find input').value === 'Filler'`, { label: 'the editor query wins' })
   } finally {
     await app.close()
   }

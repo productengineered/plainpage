@@ -340,7 +340,8 @@ function toggleHelp(): void {
 /* ⌘F finds where you are. The editor has its CodeMirror find & replace;
  * the preview and the help page each have a find bar of their own, so
  * reading never means leaving the page. A one-line selection on the page
- * seeds the search; otherwise an empty bar picks up the editor's query. */
+ * seeds the search; otherwise the editor's query does — every preview
+ * keystroke is mirrored there, so it is always the newest one. */
 function openFind(): void {
   const selected = window.getSelection()?.toString().trim() ?? ''
   const seed = selected !== '' && !selected.includes('\n') ? selected : undefined
@@ -348,7 +349,7 @@ function openFind(): void {
     helpPreview.openFind(seed)
   } else if (preview.visible) {
     const editorQuery = getSearchQuery(editor.view.state).search
-    preview.openFind(seed ?? (preview.findQuery === '' ? editorQuery : undefined))
+    preview.openFind(seed ?? (editorQuery !== '' ? editorQuery : undefined))
   } else {
     // Mid-way into preview there is no page yet to search.
     if (previewEntering) exitPreview()
