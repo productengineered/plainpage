@@ -30,7 +30,7 @@ import './styles/themes/github-dark.css'
 import './styles/themes/vercel.css'
 import './styles/themes/vscode.css'
 import './styles/base.css'
-import { openSearchPanel } from '@codemirror/search'
+import { getSearchQuery, openSearchPanel, SearchQuery, setSearchQuery } from '@codemirror/search'
 import type { EditorState, StateCommand, TransactionSpec } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { renderMarkdown } from '../shared/markdown'
@@ -193,6 +193,12 @@ const preview = new Preview(
     const copied = await window.foolscap.copyRichText(displayedId, markdown)
     if (!copied) showToast('That copy could not be built.')
     return copied
+  },
+  // Preview find's query becomes the editor's, so ⌘F after ⌘E picks up
+  // the same search (the replace text stays the editor's own).
+  (search, options) => {
+    const replace = getSearchQuery(editor.view.state).replace
+    editor.view.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search, replace, ...options })) })
   }
 )
 
@@ -324,17 +330,36 @@ function toggleHelp(): void {
     if (preview.visible) preview.focus()
     else editor.view.focus()
   } else {
+    // Help covers the page; a find bar left open under it would keep
+    // painting matches nobody can see.
+    preview.closeFind()
     void helpPreview.show(localizeKeys(helpMd, window.foolscap.platform), null, 0).catch(() => showToast('Help failed to render.'))
   }
 }
 
-/* Find is a CodeMirror panel, so it can only exist in the editor: reaching
- * it from preview means leaving preview. Help overlays both; close it too. */
+/* ⌘F finds where you are. The editor has its CodeMirror find & replace;
+ * the preview and the help page each have a find bar of their own, so
+ * reading never means leaving the page. A one-line selection on the page
+ * seeds the search; otherwise the editor's query does — every preview
+ * keystroke is mirrored there, so it is always the newest one. */
 function openFind(): void {
-  if (helpPreview.visible) toggleHelp()
-  if (preview.visible || previewEntering) exitPreview()
-  openSearchPanel(editor.view)
+  const selected = window.getSelection()?.toString().trim() ?? ''
+  const seed = selected !== '' && !selected.includes('\n') ? selected : undefined
+  if (helpPreview.visible) {
+    helpPreview.openFind(seed)
+  } else if (preview.visible) {
+    const editorQuery = getSearchQuery(editor.view.state).search
+    preview.openFind(seed ?? (editorQuery !== '' ? editorQuery : undefined))
+  } else {
+    // Mid-way into preview there is no page yet to search.
+    if (previewEntering) exitPreview()
+    openSearchPanel(editor.view)
+  }
 }
+
+/* The find bar of whichever page is showing, when it's open. */
+const pageWithFind = (): Preview | null =>
+  helpPreview.visible ? (helpPreview.findOpen ? helpPreview : null) : preview.visible && preview.findOpen ? preview : null
 
 function loadCustomTheme(): void {
   void window.foolscap.loadCustomTheme().then((css) => {
@@ -483,12 +508,9 @@ const paletteCommands = (): PaletteCommand[] => [
   },
   {
     id: 'find',
-    title: 'Find & Replace',
+    title: 'Find',
     hint: keys('mod', 'F'),
-    run: () => {
-      if (preview.visible || previewEntering) exitPreview()
-      openSearchPanel(editor.view)
-    }
+    run: () => openFind()
   },
   { id: 'preview', title: 'Toggle Preview', hint: keys('mod', 'E'), run: () => togglePreview() },
   { id: 'format-bold', title: 'Format: Bold', hint: keys('mod', 'B'), run: () => formatInEditor(toggleBold) },
@@ -644,6 +666,13 @@ window.addEventListener('keydown', (e) => {
     // catches ⌘F everywhere else (preview, help, outline).
     e.preventDefault()
     openFind()
+  } else if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'g' && pageWithFind()) {
+    // ⌘G / ⇧⌘G step through a page's matches; in the editor CodeMirror's
+    // own keymap has them.
+    e.preventDefault()
+    const page = pageWithFind()
+    if (e.shiftKey) page?.findPrevious()
+    else page?.findNext()
   } else if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === ',') {
     e.preventDefault()
     settings.toggle()

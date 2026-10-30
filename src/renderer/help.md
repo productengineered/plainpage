@@ -30,7 +30,7 @@ Everything lives in the command palette — press `⌘K` and type.
 | ---- | ------------ |
 | `⌘K` | Command palette — everything is in here |
 | `⌘E` | Toggle preview (the fully rendered document) |
-| `⌘F` | Find & replace, regex optional |
+| `⌘F` | Find — in the editor with replace, in preview right on the page; `⌘G` for the next match |
 | `⌘B` / `⌘I` | Bold / italic (`⇧⌘X` strike, `⇧⌘C` code, `⇧⌘K` link) |
 | `⇧⌘O` | Outline panel — headings, click to jump |
 | `⌘N` | New window |

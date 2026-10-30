@@ -10,6 +10,7 @@ import {
   tableSourceAt
 } from '../editor/table-model'
 import { renderMarkdown } from '../../shared/markdown'
+import { type FindOptions, PreviewFind } from './preview-find'
 import { tokenMs } from './tokens'
 
 /* Index of the stamp best covering pos: the largest one <= pos. DOM order is
@@ -282,6 +283,9 @@ const RENDER_CACHE_SIZE = 12
 
 export class Preview {
   private readonly el: HTMLElement
+  /* The rendered document; the find bar sits above it in the same pane. */
+  private readonly page: HTMLElement
+  private readonly find: PreviewFind
   visible = false
 
   private markdown = ''
@@ -304,10 +308,19 @@ export class Preview {
     private readonly applyEdit?: (from: number, to: number, insert: string) => string | null,
     // Not readonly: the e2e suite swaps it for a stub so a run never
     // writes the developer's clipboard.
-    private copyRich?: (markdown: string) => Promise<boolean>
+    private copyRich?: (markdown: string) => Promise<boolean>,
+    onFindQuery?: (query: string, options: FindOptions) => void
   ) {
     this.el = document.createElement('div')
     this.el.className = 'preview'
+    this.page = document.createElement('div')
+    this.find = new PreviewFind(
+      () => this.page.querySelector('.preview-doc'),
+      this.el,
+      () => this.focus(),
+      onFindQuery
+    )
+    this.el.append(this.find.dom, this.page)
     /* The body scroll is locked (overflow: hidden) and hiding the editor
      * drops focus to <body> — the pane itself must hold focus or Space,
      * arrows, and PageDown scroll nothing. */
@@ -406,7 +419,7 @@ export class Preview {
     // An answer still open in the old DOM is gone with it; its typing is
     // already in the source.
     this.answer = null
-    this.el.innerHTML = `<main class="preview-doc">${html}</main>`
+    this.page.innerHTML = `<main class="preview-doc">${html}</main>`
     // The pipeline escapes raw HTML, so this is our own output only.
     for (const img of this.el.querySelectorAll('img')) {
       const src = img.getAttribute('src')
@@ -417,6 +430,7 @@ export class Preview {
     this.sizeTables()
     this.addCopyButtons()
     this.addSectionButtons()
+    this.find.refresh()
   }
 
   /* Every code block gets a copy button. It sits beside the <pre> in a
@@ -502,8 +516,35 @@ export class Preview {
   }
 
   hide(): void {
+    this.find.close()
     this.el.hidden = true
     this.visible = false
+  }
+
+  /* ⌘F while the page shows: open (or refocus) the find bar. */
+  openFind(seed?: string): void {
+    this.find.show(seed)
+  }
+
+  get findOpen(): boolean {
+    return this.find.open
+  }
+
+  /* The bar's query, for the editor's find when preview hands off. */
+  get findQuery(): string {
+    return this.find.query
+  }
+
+  findNext(): void {
+    this.find.next()
+  }
+
+  findPrevious(): void {
+    this.find.previous()
+  }
+
+  closeFind(): void {
+    this.find.close()
   }
 
   /* Source position and viewport top of the content at the pane's center,
