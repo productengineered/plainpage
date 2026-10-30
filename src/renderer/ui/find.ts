@@ -17,7 +17,7 @@ import type { EditorView, Panel, ViewUpdate } from '@codemirror/view'
 
 const COUNT_CAP = 1000
 
-function button(label: string, title: string, onClick: () => void): HTMLButtonElement {
+export function button(label: string, title: string, onClick: () => void): HTMLButtonElement {
   const el = document.createElement('button')
   el.type = 'button'
   el.textContent = label
@@ -27,7 +27,7 @@ function button(label: string, title: string, onClick: () => void): HTMLButtonEl
   return el
 }
 
-function chip(label: string, title: string, initial: boolean, onToggle: () => void): HTMLButtonElement {
+export function chip(label: string, title: string, initial: boolean, onToggle: () => void): HTMLButtonElement {
   const el = document.createElement('button')
   el.type = 'button'
   el.className = 'find-chip'
@@ -42,7 +42,7 @@ function chip(label: string, title: string, initial: boolean, onToggle: () => vo
   return el
 }
 
-const pressed = (el: HTMLButtonElement): boolean => el.getAttribute('aria-pressed') === 'true'
+export const pressed = (el: HTMLButtonElement): boolean => el.getAttribute('aria-pressed') === 'true'
 
 export function createFindPanel(view: EditorView): Panel {
   const existing = getSearchQuery(view.state)
