@@ -80,8 +80,9 @@ its corner, and long lines wrap so a whole prompt is in view.
 - **Links** — `⌘`-click opens them in your browser. `⇧⌘K` turns the
   selection into `[text]()` with the caret waiting in the parens — or
   just select some words and paste a URL over them.
-- **Task lists** — `- [ ]` becomes a checkbox you can actually click;
-  ticking it writes the `x` into your file, because the file is the truth.
+- **Task lists** — `- [ ]` becomes a checkbox you can actually click,
+  in the editor or the finished page (`⌘E`); ticking it writes the `x`
+  into your file, because the file is the truth.
 - **Code** — fences highlight with real grammars, set in Ioskeley Mono.
 
 ## Saving

@@ -220,6 +220,16 @@ export function dedent(text: string, indent: number): string {
   return text.replace(new RegExp(`^ {1,${indent}}`, 'gm'), '')
 }
 
+/* A task item's `[ ]` / `[x]` in the source, from its list item's data-pos
+ * stamp (the bullet): the offset of the character between the brackets,
+ * and whether it's ticked. Null when the stamp no longer lands on a task
+ * marker — the source moved under it. */
+export function taskMarkerAt(source: string, itemPos: number): { at: number; checked: boolean } | null {
+  const match = /^(?:[-*+]|\d{1,9}[.)])[ \t]+\[([ xX])\]/.exec(source.slice(itemPos, itemPos + 20))
+  if (!match?.[1]) return null
+  return { at: itemPos + match[0].length - 2, checked: match[1] !== ' ' }
+}
+
 /* Index of the span covering (or nearest to) a target line. Ties go to the
  * later span: document order puts children after their parents, so nested
  * elements resolve to the most specific one under the line. */
@@ -289,6 +299,9 @@ export class Preview {
   visible = false
 
   private markdown = ''
+  /* The source the pane's DOM was rendered from; data-pos stamps are true
+   * for it. An answer typed since moves the text under later stamps. */
+  private renderedMarkdown = ''
   private docDir: string | null = null
   private resize: ColumnResize | null = null
   private answer: AnswerEdit | null = null
@@ -386,6 +399,7 @@ export class Preview {
       })
       this.el.addEventListener('mousedown', (event) => this.startResize(event))
       this.el.addEventListener('mousedown', (event) => this.startAnswer(event))
+      this.el.addEventListener('change', (event) => void this.toggleTask(event))
       this.el.addEventListener('mousedown', () => (this.pointerDown = true), { capture: true })
       window.addEventListener('mouseup', () => (this.pointerDown = false), { capture: true })
     }
@@ -419,6 +433,7 @@ export class Preview {
     // An answer still open in the old DOM is gone with it; its typing is
     // already in the source.
     this.answer = null
+    this.renderedMarkdown = this.markdown
     this.page.innerHTML = `<main class="preview-doc">${html}</main>`
     // The pipeline escapes raw HTML, so this is our own output only.
     for (const img of this.el.querySelectorAll('img')) {
@@ -428,6 +443,7 @@ export class Preview {
       else img.removeAttribute('src')
     }
     this.sizeTables()
+    this.enableTasks()
     this.addCopyButtons()
     this.addSectionButtons()
     this.find.refresh()
@@ -611,6 +627,66 @@ export class Preview {
       table.prepend(colgroup)
       table.style.width = '100%'
     }
+  }
+
+  /* ---- task lists: ticked in place ---- */
+
+  /* The pipeline renders task checkboxes disabled (exports are static);
+   * with a write-back hook they take a click. Each leaves focus where it
+   * is (the pane holds keyboard scrolling), and a quick second click is a
+   * second toggle, not a drop into the editor. */
+  private enableTasks(): void {
+    if (!this.applyEdit) return
+    for (const box of this.taskBoxes(this.el)) {
+      box.disabled = false
+      box.classList.add('fs-task-box')
+      box.addEventListener('mousedown', (event) => {
+        event.preventDefault()
+        // Focus stays put, so an open answer won't blur on its own; the
+        // click still ends it, like a click anywhere else.
+        this.answer?.cell.blur()
+      })
+      box.addEventListener('dblclick', (event) => event.stopPropagation())
+    }
+  }
+
+  /* Each task item's own checkbox, in document order — directly in the
+   * item, or in its first paragraph when the list is loose. */
+  private taskBoxes(root: ParentNode): HTMLInputElement[] {
+    return [
+      ...root.querySelectorAll<HTMLInputElement>(
+        'li.task-list-item > input[type="checkbox"], li.task-list-item > p:first-child > input[type="checkbox"]'
+      )
+    ]
+  }
+
+  /* A click ticked the box; the file gets the `x` (or loses it). The box
+   * is found in the source by its item's stamp — re-found through the
+   * pipeline when an answer typed since has moved the text. */
+  private async toggleTask(event: Event): Promise<void> {
+    const box = event.target
+    if (!(box instanceof HTMLInputElement) || !box.classList.contains('fs-task-box') || !this.applyEdit) return
+    const index = this.taskBoxes(this.el).indexOf(box)
+    let itemPos = Number(box.closest<HTMLElement>('li.task-list-item')?.dataset['pos'])
+    const source = this.markdown
+    if (source !== this.renderedMarkdown) {
+      const template = document.createElement('template')
+      // Our own pipeline's output (it escapes raw HTML); template content
+      // is inert, never rendered.
+      template.innerHTML = await renderMarkdown(source, { sourcePositions: true })
+      itemPos = Number(this.taskBoxes(template.content)[index]?.closest<HTMLElement>('li')?.dataset['pos'])
+    }
+    const marker = Number.isInteger(itemPos) && source === this.markdown ? taskMarkerAt(source, itemPos) : null
+    const updated = marker && this.applyEdit(marker.at, marker.at + 1, marker.checked ? ' ' : 'x')
+    if (!marker || !updated) {
+      // Nothing written: the box shows the file's truth again.
+      box.checked = !box.checked
+      return
+    }
+    // One character for one character: every stamp still holds.
+    if (this.renderedMarkdown === source) this.renderedMarkdown = updated
+    this.markdown = updated
+    box.checked = !marker.checked
   }
 
   /* ---- response answers: typed in place ---- */

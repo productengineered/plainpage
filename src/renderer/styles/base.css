@@ -558,6 +558,11 @@ body {
   accent-color: var(--accent);
 }
 
+/* Live in preview (a document, not help or an export): a click ticks it. */
+.preview-doc input.fs-task-box {
+  cursor: pointer;
+}
+
 .preview-doc li:has(> input[type='checkbox']) {
   list-style: none;
   margin-left: -1.2em;
