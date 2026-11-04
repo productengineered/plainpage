@@ -502,6 +502,28 @@ body {
   z-index: 5;
 }
 
+/* Find in preview (preview-find.ts): the editor's find bar, pinned to the
+ * top of the pane while the page scrolls under it. */
+.preview-find {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+
+.preview-find[hidden] {
+  display: none;
+}
+
+::highlight(fs-find) {
+  background-color: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+::highlight(fs-find-current) {
+  background-color: color-mix(in srgb, var(--accent) 36%, transparent);
+}
+
 .preview-doc {
   max-width: var(--measure-app);
   margin: 0 auto;
