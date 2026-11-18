@@ -899,6 +899,31 @@ body {
   cursor: default;
 }
 
+.settings-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink-soft);
+  margin-right: 0.35rem;
+}
+
+.settings-input {
+  font: inherit;
+  font-variation-settings: inherit;
+  width: 5em;
+  color: var(--ink);
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-inline);
+  padding: 0.25em 0.5em;
+  text-transform: uppercase;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .settings-value {
   color: var(--ink);
   min-width: 3.2em;

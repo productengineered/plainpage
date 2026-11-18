@@ -46,6 +46,8 @@ import { beginCellEditAt, finishCellEdit, posOutsideGrid } from './editor/live-p
 import { imageBlockInsertion, imagesInline, insertDroppedImages } from './editor/paste-image'
 import { createEditor } from './editor/setup'
 import helpMd from './help.md?raw'
+import agentGuideMd from '../../docs/agents.md?raw'
+import { agentPrompt, GUIDE_TOPICS, type GuideTopic } from './agent-guide'
 import welcomeMd from './welcome.md?raw'
 import { AutosaveScheduler, autosaveEnabled, setAutosaveEnabled } from './ui/autosave'
 import { classifyDrop, droppedImages } from './ui/drop'
@@ -55,6 +57,7 @@ import {
   applyFont,
   applyTextSize,
   applyTheme,
+  currentInitials,
   FONTS,
   Modes,
   restoreFont,
@@ -400,6 +403,7 @@ const settings = new Settings({
   loadCustomTheme,
   checkForUpdates: canCheckUpdates ? checkUpdatesNow : null,
   autosaveOn: () => autosaveEnabled(),
+  copyAgentGuide: () => copyAgentGuide('all'),
   toggleAutosave: () => {
     const on = !autosaveEnabled()
     setAutosaveEnabled(on)
@@ -455,6 +459,10 @@ window.foolscap.onCommand((command) => {
   else if (command === 'format-code') formatInEditor(toggleInlineCode)
   else if (command === 'format-link') formatInEditor(insertLink)
   else if (command === 'browse-versions') void versions.open()
+  else if (command === 'copy-agent-guide-all') copyAgentGuide('all')
+  else if (command === 'copy-agent-guide-response-rows') copyAgentGuide('response-rows')
+  else if (command === 'copy-agent-guide-copy-sections') copyAgentGuide('copy-sections')
+  else if (command === 'copy-agent-guide-task-lists') copyAgentGuide('task-lists')
 })
 
 const revealLabel = window.foolscap.platform === 'darwin' ? 'Reveal in Finder' : 'Show in Folder'
@@ -473,6 +481,18 @@ async function copyRichText(): Promise<void> {
   if (displayedId === null) return
   const copied = await window.foolscap.copyRichText(displayedId)
   showToast(copied ? 'Copied with formatting.' : 'That copy could not be built.')
+}
+
+/* Help ▸ Copy Instructions for Agents: docs/agents.md as a prompt, with
+ * the initials from Settings in its response rows. */
+function copyAgentGuide(topic: GuideTopic): void {
+  navigator.clipboard.writeText(agentPrompt(agentGuideMd, topic, currentInitials())).then(
+    () => showToast('Instructions copied — paste them into your agent.'),
+    (err: unknown) => {
+      console.error('agent guide copy failed', err)
+      showToast('Those instructions could not be copied.')
+    }
+  )
 }
 
 const paletteCommands = (): PaletteCommand[] => [
@@ -519,6 +539,11 @@ const paletteCommands = (): PaletteCommand[] => [
   { id: 'format-code', title: 'Format: Inline Code', hint: keys('shift', 'mod', 'C'), run: () => formatInEditor(toggleInlineCode) },
   { id: 'format-link', title: 'Format: Link', hint: keys('shift', 'mod', 'K'), run: () => formatInEditor(insertLink) },
   { id: 'help', title: 'Plainpage Guide (Help)', hint: keys('shift', 'mod', '/'), run: () => window.foolscap.exec('help-window') },
+  ...GUIDE_TOPICS.map((topic) => ({
+    id: `agent-guide-${topic.id}`,
+    title: `Copy Instructions for Agents: ${topic.label}`,
+    run: () => copyAgentGuide(topic.id)
+  })),
   { id: 'outline', title: 'Toggle Outline', hint: keys('shift', 'mod', 'O'), run: () => outline.toggle() },
   { id: 'export-html', title: 'Export as HTML…', run: () => window.foolscap.exec('export-html') },
   { id: 'export-pdf', title: 'Export as PDF…', run: () => window.foolscap.exec('export-pdf') },

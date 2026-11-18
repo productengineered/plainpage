@@ -1,10 +1,12 @@
 import {
   adjustTextSize,
+  applyInitials,
   applyFont,
   applyTextSize,
   applyTheme,
   currentFont,
   currentTextSize,
+  currentInitials,
   currentTheme,
   FONTS,
   THEMES,
@@ -22,6 +24,8 @@ interface SettingsHooks {
   checkForUpdates: (() => void) | null
   autosaveOn(): boolean
   toggleAutosave(): void
+  /* Help ▸ Copy Instructions for Agents, all features. */
+  copyAgentGuide(): void
 }
 
 export class Settings {
@@ -72,7 +76,8 @@ export class Settings {
       this.fontSection(),
       this.sizeSection(),
       this.modesSection(),
-      this.savingSection()
+      this.savingSection(),
+      this.agentsSection()
     )
     if (this.hooks.checkForUpdates) card.append(this.updatesSection())
 
@@ -159,6 +164,30 @@ export class Settings {
   private savingSection(): HTMLElement {
     const { wrap, row } = this.section('Saving')
     row.append(this.chip('Autosave', this.hooks.autosaveOn(), () => this.hooks.toggleAutosave()))
+    return wrap
+  }
+
+  /* The reviewer's initials label response rows in agent prompts. Typed
+   * straight into storage; no re-render, so the field keeps its caret. */
+  private agentsSection(): HTMLElement {
+    const { wrap, row } = this.section('Agents')
+    const label = document.createElement('label')
+    label.className = 'settings-field'
+    label.textContent = 'Your initials'
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.className = 'settings-input'
+    input.maxLength = 8
+    input.placeholder = 'BD'
+    input.spellcheck = false
+    input.value = currentInitials() ?? ''
+    input.addEventListener('input', () => void applyInitials(input.value))
+    input.addEventListener('change', () => (input.value = currentInitials() ?? ''))
+    label.append(input)
+    row.append(
+      label,
+      this.chip('Copy instructions for agents', false, () => this.hooks.copyAgentGuide())
+    )
     return wrap
   }
 

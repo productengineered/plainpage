@@ -85,6 +85,15 @@ its corner, and long lines wrap so a whole prompt is in view.
   into your file, because the file is the truth.
 - **Code** — fences highlight with real grammars, set in Ioskeley Mono.
 
+## Working with AI agents
+
+Agents that write documents for you can use response rows, copy sections,
+and task lists too — they just need telling how. *Help ▸ Copy
+Instructions for Agents* (or `⌘K`) puts a ready-made prompt on the
+clipboard: everything, or one feature at a time. Paste it into the agent's
+chat or instructions file. Set your initials in `⌘,` ▸ Agents and the
+prompt labels response rows with them (`BD RESPONSE:`).
+
 ## Saving
 
 - **Autosave** keeps a saved document current on disk: a pause in typing,

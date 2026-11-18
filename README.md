@@ -123,6 +123,25 @@ Details:
   formatted half of a whole-document Copy as Rich Text; its plain-text
   half is the document's markdown as written, markers included.
 
+## Instructions for AI agents
+
+If agents write documents for you, they can use response rows, copy
+sections, and task lists too. [docs/agents.md](docs/agents.md) is the
+guide written for them: the syntax, the rules, and how to read your answers
+back. Its examples are checked against the app in the test suite, so the
+guide stays true as Plainpage changes.
+
+To hand it to an agent:
+
+- **Copy a prompt:** *Help ▸ Copy Instructions for Agents* (also in ⌘K)
+  puts the guide on the clipboard as a prompt, either all of it or one
+  feature at a time. Paste it into the agent's chat or instructions file.
+- **Your initials:** set them in Settings (⌘,) ▸ Agents, and the prompt
+  labels response rows with them (`BD RESPONSE:`) instead of an example.
+- **Point to it:** an agent that can read the web can be told to read
+  `https://raw.githubusercontent.com/productengineered/plainpage/main/docs/agents.md`
+  before it writes a document for you.
+
 ## Opening files by link
 
 Other apps and web pages can open a document in Plainpage with a link:
