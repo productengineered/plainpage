@@ -20,7 +20,7 @@ what you wrote.
 ## What it does
 
 - Files open where you left them; ⇧⌘T reopens a closed tab; drop an image from Finder or File Explorer or paste a URL over a selection and the markdown writes itself
-- Live preview of every markdown construct: headings (Fraunces, real optical sizing), emphasis, lists with hanging indents and real bullets, links (⌘-click, or Ctrl-click on Windows, to open), Shiki-highlighted code fences, inline images, blockquotes, rules, clickable task-list checkboxes, and tables that render as a real grid and edit in place (click a cell and type; ⌥-click for the pipe source with its normalizing formatter, drag-to-resize columns, and hover column controls)
+- Live preview of every markdown construct: headings (Fraunces, real optical sizing), emphasis, lists with hanging indents and real bullets, links (⌘-click, or Ctrl-click on Windows, to open), Shiki-highlighted code fences, inline images, blockquotes, rules, task-list checkboxes you can tick in the editor or the rendered preview, and tables that render as a real grid and edit in place (click a cell and type; ⌥-click for the pipe source with its normalizing formatter, drag-to-resize columns, and hover column controls)
 - Copy sections: wrap text in `<!-- copy -->` … `<!-- /copy -->` and the preview gives it a one-click copy button that keeps bullets and bold ([how](#copy-sections))
 - Atomic saves — temp file, fsync, rename; a crash can never truncate your manuscript
 - Autosave with a browsable version history (File ▸ Browse Versions…), restores that ⌘Z undoes, and an undo stack that survives relaunch
@@ -122,6 +122,25 @@ Details:
   in preview only. HTML and PDF exports leave both out, and so does the
   formatted half of a whole-document Copy as Rich Text; its plain-text
   half is the document's markdown as written, markers included.
+
+## Instructions for AI agents
+
+If agents write documents for you, they can use response rows, copy
+sections, and task lists too. [docs/agents.md](docs/agents.md) is the
+guide written for them: the syntax, the rules, and how to read your answers
+back. Its examples are checked against the app in the test suite, so the
+guide stays true as Plainpage changes.
+
+To hand it to an agent:
+
+- **Copy a prompt:** *Help ▸ Copy Instructions for Agents* (also in ⌘K)
+  puts the guide on the clipboard as a prompt, either all of it or one
+  feature at a time. Paste it into the agent's chat or instructions file.
+- **Your initials:** set them in Settings (⌘,) ▸ Agents, and the prompt
+  labels response rows with them (`BD RESPONSE:`) instead of an example.
+- **Point to it:** an agent that can read the web can be told to read
+  `https://raw.githubusercontent.com/productengineered/plainpage/main/docs/agents.md`
+  before it writes a document for you.
 
 ## Opening files by link
 

@@ -1,5 +1,6 @@
 import type { EditorState } from '@codemirror/state'
 import { EditorView, type ViewUpdate } from '@codemirror/view'
+import { normalizeInitials } from '../agent-guide'
 import { lineNumbersOn, setLineNumbers, syncLineNumbers } from '../editor/line-numbers'
 import { setTableGrid, syncTableGrid, tableGridOn } from '../editor/live-preview/table-grid'
 import { tokenMs } from './tokens'
@@ -41,7 +42,8 @@ const STORE = {
   customThemeCss: 'foolscap:custom-theme-css',
   typewriter: 'foolscap:typewriter',
   focus: 'foolscap:focus',
-  wordCount: 'foolscap:word-count'
+  wordCount: 'foolscap:word-count',
+  initials: 'foolscap:initials'
 } as const
 
 /* ---- Text size (plan §4.2: user control from 14 to 22) ---- */
@@ -153,6 +155,19 @@ export function selectedWordCount(state: EditorState): number | null {
     count += countWords(state.sliceDoc(range.from, range.to))
   }
   return any ? count : null
+}
+
+/* ---- Initials: the reviewer's, for response rows in agent prompts ---- */
+
+export function currentInitials(): string | null {
+  return normalizeInitials(localStorage.getItem(STORE.initials) ?? '')
+}
+
+export function applyInitials(raw: string): string | null {
+  const initials = normalizeInitials(raw)
+  if (initials) localStorage.setItem(STORE.initials, initials)
+  else localStorage.removeItem(STORE.initials)
+  return initials
 }
 
 export function applyTheme(theme: ThemeName | null): void {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bestCoveringIndex, dedent, nearestSpanIndex, sourceOffsetAt, sourceOffsetNear } from './preview'
+import { bestCoveringIndex, dedent, nearestSpanIndex, sourceOffsetAt, sourceOffsetNear, taskMarkerAt } from './preview'
 
 describe('bestCoveringIndex', () => {
   it('picks the largest stamp at or below the target', () => {
@@ -154,5 +154,26 @@ describe('dedent — a copy section out of its list item', () => {
   it('never removes more than the indent, and nothing at zero', () => {
     expect(dedent('  two\n      six', 4)).toBe('two\n  six')
     expect(dedent('    code', 0)).toBe('    code')
+  })
+})
+
+describe('taskMarkerAt', () => {
+  const doc = '- [ ] one\n* [x] two\n1. [X] three\n12) [ ] four\n- plain\n- [y] not a task'
+
+  it('finds the character between the brackets, and whether it is ticked', () => {
+    expect(taskMarkerAt(doc, 0)).toEqual({ at: 3, checked: false })
+    expect(doc[3]).toBe(' ')
+    expect(taskMarkerAt(doc, 10)).toEqual({ at: 13, checked: true })
+    expect(doc[13]).toBe('x')
+    const three = doc.indexOf('1.')
+    expect(taskMarkerAt(doc, three)).toEqual({ at: three + 4, checked: true })
+    const four = doc.indexOf('12)')
+    expect(taskMarkerAt(doc, four)).toEqual({ at: four + 5, checked: false })
+  })
+
+  it('is null off a task marker — a plain item, a stale stamp', () => {
+    expect(taskMarkerAt(doc, doc.indexOf('- plain'))).toBeNull()
+    expect(taskMarkerAt(doc, doc.indexOf('- [y]'))).toBeNull()
+    expect(taskMarkerAt(doc, 2)).toBeNull()
   })
 })

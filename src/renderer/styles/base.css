@@ -558,6 +558,11 @@ body {
   accent-color: var(--accent);
 }
 
+/* Live in preview (a document, not help or an export): a click ticks it. */
+.preview-doc input.fs-task-box {
+  cursor: pointer;
+}
+
 .preview-doc li:has(> input[type='checkbox']) {
   list-style: none;
   margin-left: -1.2em;
@@ -892,6 +897,31 @@ body {
   color: var(--ink-ghost);
   background: none;
   cursor: default;
+}
+
+.settings-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink-soft);
+  margin-right: 0.35rem;
+}
+
+.settings-input {
+  font: inherit;
+  font-variation-settings: inherit;
+  width: 5em;
+  color: var(--ink);
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-inline);
+  padding: 0.25em 0.5em;
+  text-transform: uppercase;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .settings-value {

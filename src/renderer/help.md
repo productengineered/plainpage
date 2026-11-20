@@ -80,9 +80,19 @@ its corner, and long lines wrap so a whole prompt is in view.
 - **Links** — `⌘`-click opens them in your browser. `⇧⌘K` turns the
   selection into `[text]()` with the caret waiting in the parens — or
   just select some words and paste a URL over them.
-- **Task lists** — `- [ ]` becomes a checkbox you can actually click;
-  ticking it writes the `x` into your file, because the file is the truth.
+- **Task lists** — `- [ ]` becomes a checkbox you can actually click,
+  in the editor or the finished page (`⌘E`); ticking it writes the `x`
+  into your file, because the file is the truth.
 - **Code** — fences highlight with real grammars, set in Ioskeley Mono.
+
+## Working with AI agents
+
+Agents that write documents for you can use response rows, copy sections,
+and task lists too — they just need telling how. *Help ▸ Copy
+Instructions for Agents* (or `⌘K`) puts a ready-made prompt on the
+clipboard: everything, or one feature at a time. Paste it into the agent's
+chat or instructions file. Set your initials in `⌘,` ▸ Agents and the
+prompt labels response rows with them (`BD RESPONSE:`).
 
 ## Saving
 

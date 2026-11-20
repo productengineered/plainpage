@@ -116,6 +116,10 @@ export type MenuCommand =
   | 'format-link'
   | 'browse-versions'
   | 'copy-rich-text'
+  | 'copy-agent-guide-all'
+  | 'copy-agent-guide-response-rows'
+  | 'copy-agent-guide-copy-sections'
+  | 'copy-agent-guide-task-lists'
 
 /* A new version, downloaded and verified by src/main/updater.ts — ready to
  * install the moment the app restarts. */

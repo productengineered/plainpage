@@ -202,6 +202,18 @@ export function installMenu(actions: MenuActions): void {
           accelerator: 'CmdOrCtrl+Shift+/',
           click: () => actions.help()
         },
+        // A paste-ready prompt from docs/agents.md, built in the renderer
+        // (it knows the reviewer's initials).
+        {
+          label: 'Copy Instructions for Agents',
+          submenu: [
+            { label: 'All Features', click: () => sendCommand('copy-agent-guide-all') },
+            { type: 'separator' },
+            { label: 'Response Rows', click: () => sendCommand('copy-agent-guide-response-rows') },
+            { label: 'Copy Sections', click: () => sendCommand('copy-agent-guide-copy-sections') },
+            { label: 'Task Lists', click: () => sendCommand('copy-agent-guide-task-lists') }
+          ]
+        },
         // The App Store edition offers no update check: the Store owns
         // updates, and App Review rejects apps that add their own.
         ...(EDITION === 'direct'
