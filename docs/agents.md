@@ -15,6 +15,11 @@ The examples use `BD` as the reviewer's initials. Use the reviewer's own.
   task lists, footnotes, and fenced code blocks with a language.
 - Raw HTML is dropped from the page. The one exception is `<br>` inside a
   table cell, the only way to break a line there.
+- Link to other files with a path relative to the document, such as
+  `[the brief](brief.md)` or `[slides](../decks/week-3.pdf)`. Clicking a
+  link to a markdown file opens it in a new Plainpage tab; other files
+  open in their own app. Encode spaces as `%20`, or wrap the path in
+  angle brackets: `[notes](<my notes.md>)`.
 - Diagram languages such as Mermaid show as code, not as a picture.
 - Every code block gets a copy button in preview, so put anything the
   reviewer should paste somewhere (a command, a prompt) in a fenced block.

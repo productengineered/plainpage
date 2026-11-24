@@ -231,6 +231,8 @@ export interface FoolscapApi {
   historyList(docId: number): Promise<HistoryEntry[]>
   historyRead(docId: number, id: string): Promise<string | null>
   resolveConflict(docId: number, choice: ConflictChoice): void
+  /* A link clicked in the document, as written: web links go to the
+   * browser, file links open in a tab or their own app (main/doc-link.ts). */
   openExternal(url: string): void
   exec(command: AppCommand): void
   /* Returns the relative markdown path, or null for an unsaved document. A

@@ -1,8 +1,9 @@
 import { dialog, ipcMain, shell } from 'electron'
-import { existsSync } from 'node:fs'
+import { existsSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { basename, dirname } from 'node:path'
 import { DROPPABLE_FILE, IPC, type AppCommand, type ConflictChoice, type RecentFile } from '../shared/types'
+import { resolveDocLink, WEB_SCHEMES, type PathProbe } from './doc-link'
 import { readTextFile } from './files'
 import type { MenuActions } from './menu'
 import { showPathMenu } from './path-menu'
@@ -10,7 +11,18 @@ import { positions } from './positions-store'
 import { setAutosaveEnabled, type WindowSession } from './session'
 import { updates } from '#updater'
 
-export const OPENABLE_SCHEMES = new Set(['http:', 'https:', 'mailto:'])
+export const OPENABLE_SCHEMES = WEB_SCHEMES
+
+const probe: PathProbe = {
+  kind: (path) => {
+    try {
+      const stat = statSync(path)
+      return stat.isFile() ? 'file' : stat.isDirectory() ? 'dir' : 'missing'
+    } catch {
+      return 'missing'
+    }
+  }
+}
 
 /* Enough to find Tuesday's file; not a file manager. */
 const RECENTS_SHOWN = 10
@@ -149,11 +161,34 @@ export function registerIpc(
       return null
     }
   })
-  ipcMain.on(IPC.openExternal, (_e, url: string) => {
-    try {
-      if (OPENABLE_SCHEMES.has(new URL(url).protocol)) void shell.openExternal(url)
-    } catch {
-      // not a parseable URL — ignore
+  /* A link clicked in a document (src/main/doc-link.ts). Relative links
+   * resolve against the active tab's file — the one the click came from. */
+  ipcMain.on(IPC.openExternal, (e, url: unknown) => {
+    if (typeof url !== 'string') return
+    const session = sessionFor(e.sender.id)
+    const link = resolveDocLink(url, session?.activeTab?.getPath() ?? null, probe)
+    const failed = (message: string): void => {
+      if (message) session?.notify(message)
+    }
+    switch (link.kind) {
+      case 'web':
+        void shell.openExternal(link.url)
+        break
+      case 'tab':
+        actions.openFile(link.path)
+        break
+      case 'file':
+      case 'folder':
+        void shell.openPath(link.path).then(failed)
+        break
+      case 'reveal':
+        shell.showItemInFolder(link.path)
+        break
+      case 'error':
+        failed(link.message)
+        break
+      case 'ignore':
+        break
     }
   })
 }

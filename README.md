@@ -20,7 +20,7 @@ what you wrote.
 ## What it does
 
 - Files open where you left them; ⇧⌘T reopens a closed tab; drop an image from Finder or File Explorer or paste a URL over a selection and the markdown writes itself
-- Live preview of every markdown construct: headings (Fraunces, real optical sizing), emphasis, lists with hanging indents and real bullets, links (⌘-click, or Ctrl-click on Windows, to open), Shiki-highlighted code fences, inline images, blockquotes, rules, task-list checkboxes you can tick in the editor or the rendered preview, and tables that render as a real grid and edit in place (click a cell and type; ⌥-click for the pipe source with its normalizing formatter, drag-to-resize columns, and hover column controls)
+- Live preview of every markdown construct: headings (Fraunces, real optical sizing), emphasis, lists with hanging indents and real bullets, links (⌘-click, or Ctrl-click on Windows, to open; a link to another markdown file opens it in a new tab, and one to a PDF or other document opens it in its own app), Shiki-highlighted code fences, inline images, blockquotes, rules, task-list checkboxes you can tick in the editor or the rendered preview, and tables that render as a real grid and edit in place (click a cell and type; ⌥-click for the pipe source with its normalizing formatter, drag-to-resize columns, and hover column controls)
 - Copy sections: wrap text in `<!-- copy -->` … `<!-- /copy -->` and the preview gives it a one-click copy button that keeps bullets and bold ([how](#copy-sections))
 - Atomic saves — temp file, fsync, rename; a crash can never truncate your manuscript
 - Autosave with a browsable version history (File ▸ Browse Versions…), restores that ⌘Z undoes, and an undo stack that survives relaunch

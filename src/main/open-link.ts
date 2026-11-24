@@ -7,7 +7,7 @@ import { extname, isAbsolute, resolve } from 'node:path'
 
 export const LINK_SCHEME = 'plainpage'
 
-const OPENABLE = new Set(['.md', '.markdown', '.txt'])
+export const OPENABLE = new Set(['.md', '.markdown', '.txt'])
 
 export type LinkResult = { ok: true; path: string } | { ok: false; error: string }
 

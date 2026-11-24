@@ -389,7 +389,10 @@ export class Preview {
         this.el.querySelector(`[id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'start' })
         return
       }
-      window.foolscap.openExternal(link.href)
+      // The href as written: main resolves a relative file link against the
+      // document's folder, which link.href (resolved against the app's own
+      // page) would lose.
+      window.foolscap.openExternal(href)
     })
 
     if (this.applyEdit) {
