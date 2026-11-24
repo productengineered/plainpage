@@ -77,9 +77,13 @@ its corner, and long lines wrap so a whole prompt is in view.
 - **Emphasis** — `⌘B` and `⌘I` wrap the selection (or the word under the
   caret) and unwrap it if it's already formatted. The buffer stays plain
   markdown either way — the shortcut just types the stars for you.
-- **Links** — `⌘`-click opens them in your browser. `⇧⌘K` turns the
-  selection into `[text]()` with the caret waiting in the parens — or
-  just select some words and paste a URL over them.
+- **Links** — `⌘`-click one in the editor, or click it in the finished
+  page (`⌘E`). Web links open in your browser. A link to another markdown
+  file (`[notes](notes.md)`, relative to this document, or a full path)
+  opens it in a new tab; a link to a PDF, Word file, image, or other
+  document opens it in its own app. `⇧⌘K` turns the selection into
+  `[text]()` with the caret waiting in the parens — or just select some
+  words and paste a URL over them.
 - **Task lists** — `- [ ]` becomes a checkbox you can actually click,
   in the editor or the finished page (`⌘E`); ticking it writes the `x`
   into your file, because the file is the truth.

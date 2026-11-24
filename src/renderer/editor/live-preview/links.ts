@@ -35,7 +35,8 @@ function urlAt(view: EditorView, pos: number): string | null {
 }
 
 /* Cmd-click (Ctrl-click off macOS) anywhere on a link — text or URL — opens
- * it externally. Scheme validation happens in the main process. */
+ * it: web links in the browser, file links in a tab or their own app.
+ * Resolution and scheme validation happen in the main process. */
 export function linkClickHandler(): Extension {
   return EditorView.domEventHandlers({
     mousedown: (event, view) => {
